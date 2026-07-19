@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Trains one real TOK-1 grid candidate on the v0 C8 corpus.
+"""Trains one real TOK-1 grid candidate on a C8 corpus version
+(--corpus-version, defaults to v1; see v12/README.md's Data section for
+what each version actually contains).
 
 The first genuinely-trained TOK-1 candidate tokenizer in this funnel --
 real SentencePiece training, not simulated. Emits both the native .model

@@ -30,6 +30,32 @@ v11 is the only tokenizer hitting 100% on the priority target suite
 scientific terms). Gemma at 10× the vocab size misses five items, notably
 Rust stdlib types (`Vec`, `Option`, `Result`).
 
+## Data
+
+v11's ~71K-piece vocabulary is **not corpus-trained** — see the intro
+above. There is no dataset behind the pieces themselves; they're
+assembled from tree-sitter grammars, WordNet, Wikidata, and hand-curated
+lists (`v11/preprocess_wordnet.py` + `v11/config.json`, see
+[SPEC.md](SPEC.md)).
+
+`v11/corpus/` (128KB, 29 files — `prose/{geography,history,science,tech}`,
+`code/{c,go,java,javascript,python,rust,typescript}`) is a small,
+hand-curated **benchmark/spot-check sample, not training data**. It's
+what `v11-bench` measures chars/token compression and encode/decode
+throughput against, and what v12's `bench/tokenizer_bench.py roundtrip`
+checks the compiled Rust binary's round-trip behavior on. `v12`'s C8
+corpus reuses this directory's `code/` half as one small ingredient of
+its own code domain (see `v12/README.md`'s Data section) — the `prose/`
+half is not reused anywhere.
+
+The *language model* trained on top of v11 (sibling `tiny-model` repo,
+`model/v11-train/train_tinystories.py`) streams `roneneldan/TinyStories`
+directly at train time — no corpus artifact is saved from that either.
+That original training never pinned a dataset revision, so its exact
+training-time document set can't be reconstructed after the fact; see
+`model/v11-train/train_v11_replication.py` in `tiny-model` for a
+pinned-revision replication that closes this gap.
+
 ## Runtime characteristics
 
 - **Pure Rust**, no C++ FFI. Drop-in from Cargo.

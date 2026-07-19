@@ -25,6 +25,29 @@ published — it's an active, pre-registered research funnel and stays
 private to this repo until a candidate wins Gate G1/G2/G3 and is
 promoted.
 
+## Data
+
+C8 (`v12/corpus/`) is a **new, three-domain corpus** — it does not reuse
+v11's corpus wholesale, only one small slice of it. Real numbers from the
+current build (`c8_manifest_v2.json` / `c8_code_corpus_manifest.json`):
+
+| domain | source | rows | bytes | share | shares anything with v11? |
+|---|---|---|---|---|---|
+| prose | fresh `roneneldan/TinyStories` sample, pinned hub_sha | 80,000 | 72.4MB | 90.6% | same *dataset* as v11's LM training data, but an independently-sampled slice — not the same documents (v11's original training never pinned a revision, so this can't even be checked directly) |
+| math_structured | `cell-native-architectures` (sibling `cell80` repo), cn7/cn8 corpora | 120,000 | 7.5MB | 9.3% | no — v11 never saw this domain at all |
+| code | this repo's own v11/v12/bench Rust+Python source, plus `v11/corpus/code`'s 18 small multi-language sample files | 31 files | 105KB | 0.1% | **yes** — `build_code_corpus.py`'s `SOURCE_DIRS` directly harvests `v11/corpus/code` as one of six source directories |
+
+`v11/corpus/prose/` is **not** used anywhere in C8 — prose comes from a
+fresh TinyStories sample instead, not from v11's small benchmark prose
+files. See `v11/README.md`'s Data section for what `v11/corpus/` actually
+is (a small v11-bench spot-check sample; v11's vocab itself isn't
+corpus-trained at all).
+
+Build order: `build_code_corpus.py` → `assemble_c8_corpus.py`. Not yet
+done: dedup, C3-slice exclusion, repeated-identifier cap, domain
+proportions frozen by bytes (code's share has now fallen to 0.1%, down
+from 15.7% at the original prototype scale — see "Not done here" below).
+
 ## Layout
 
 ```
@@ -55,11 +78,13 @@ v-tokenizers/
                                the bulk .jsonl/.txt dumps are gitignored --
                                regenerate via the scripts below, or pull the
                                real artifact from chuk-experiments)
-      build_code_corpus.py       harvests this repo's own source into the C8 code domain
+      build_code_corpus.py       harvests this repo's own source (+ v11/corpus/code) into the C8 code domain
       c8_code_corpus_manifest.json    sha-pinned per file
       assemble_c8_corpus.py      streams TinyStories + samples cn7/cn8 math + loads code
-      c8_manifest.json           the real C8 manifest: domains, byte counts, mixture, seed
-      c8_code_corpus.jsonl / c8_corpus_v0.jsonl / .txt   (gitignored, regenerable)
+      c8_manifest_v0/v1/v2.json  the real C8 manifest per scale-up: domains, byte counts, mixture, seed
+      c8_code_corpus.jsonl / c8_corpus_v0/v1/v2.jsonl / .txt   (gitignored, regenerable;
+                               train_candidate.py defaults to --corpus-version v1,
+                               later 16K/18K candidates trained on v2 explicitly)
 
     training/                 candidate training + real evaluation (scripts
                                tracked; trained candidates/ and candidates.jsonl
