@@ -324,6 +324,29 @@ CANDIDATES = [
     ("bpe_sp_16000_v1_bytefallback", "bpe_sp_bytefallback_native", "sp", "bpe_sp_16000_v1_bytefallback_native"),
     ("bpe_sp_32000_v1_bytefallback", "bpe_sp_bytefallback_native", "sp", "bpe_sp_32000_v1_bytefallback_native"),
     ("bpe_sp_16000_v1_tcoreseed_bytefallback", "bpe_sp_tcoreseed_bytefallback_native", "sp", "bpe_sp_16000_v1_tcoreseed_bytefallback_native"),
+    # Equal-~18K-vocab controls (2026-07-19, corpus v2: 80MB, 200,031 rows --
+    # scaled specifically to push unigram_sp's ceiling closer to Chris's
+    # requested ~30K target; landed at 20527 plain / 18317 with T-core
+    # seeding, so 18000 is the largest size all four of these can share).
+    # Isolates the value of T-core injection from vocab-size budget --
+    # bpe/unigram x plain/seeded, all same size, all byte_fallback so they
+    # evaluate via the round-trip-correct HFWrappedSPBackend.
+    ("bpe_sp_18000_v2_bytefallback", "bpe_sp_bytefallback_18Kctrl", "hfwrap", None),
+    ("bpe_sp_18000_v2_tcoreseed_bytefallback", "bpe_sp_tcoreseed_bytefallback_18Kctrl", "hfwrap", None),
+    ("unigram_sp_18000_v2_bytefallback", "unigram_sp_bytefallback_18Kctrl", "hfwrap", None),
+    ("unigram_sp_18000_v2_tcoreseed_bytefallback", "unigram_sp_tcoreseed_bytefallback_18Kctrl", "hfwrap", None),
+    # Matched-size, matched-corpus 16K controls (2026-07-19): Chris's point
+    # that architecture-driven embedding sizes cluster at round boundaries
+    # (16K, 32K, ...) means 18K doesn't actually avoid the jump to 32K --
+    # it's neither a clean boundary nor efficiently packed. These isolate
+    # ALGORITHM (bpe vs unigram) at a truly matched vocab_size AND corpus
+    # (both v2, both exactly 16000), removing the size confound the
+    # bpe_sp_16000_v1 (different corpus!) vs unigram_sp_18000_v2 comparison
+    # still had.
+    ("bpe_sp_16000_v2_bytefallback", "bpe_sp_bytefallback_16Kctrl", "hfwrap", None),
+    ("bpe_sp_16000_v2_tcoreseed_bytefallback", "bpe_sp_tcoreseed_bytefallback_16Kctrl", "hfwrap", None),
+    ("unigram_sp_16000_v2_bytefallback", "unigram_sp_bytefallback_16Kctrl", "hfwrap", None),
+    ("unigram_sp_16000_v2_tcoreseed_bytefallback", "unigram_sp_tcoreseed_bytefallback_16Kctrl", "hfwrap", None),
 ]
 
 

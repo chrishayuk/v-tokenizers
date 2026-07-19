@@ -446,3 +446,35 @@ wrapper_fix_and_first_real_survivor_2026_07_19: >
   external review's own correct point that intrinsic metrics can only prune, not select.
   Results: hf_wrapper_fixes_roundtrip_completely, first_real_g1_survivor on
   RUN-20260718-224841-00387.
+
+vocab_sizing_experiment_2026_07_19: >
+  Per Chris's explicit vocab philosophy (not Kimi/o200k/Gemma scale 160K-262K -- "too large...
+  needs to be appropriate for 115M to 1B model" -- and architecture-driven: embedding sizes
+  cluster at round boundaries like 16K/32K, so an odd size like 18K doesn't avoid the jump to
+  32K, it's neither clean nor efficiently packed): scaled corpus again (v2: 80MB, 200,031 rows)
+  to push unigram_sp's ceiling toward 30K -- landed at 20527 plain / 18317 seeded (seeding itself
+  costs vocab budget, a real disclosed finding), diminishing returns again, did not chase 30K
+  further per Chris's explicit preference against over-investing in scale.
+
+  Trained matched controls at exactly 16000 (bpe_sp and unigram_sp, both plain and T-core-seeded,
+  same v2 corpus) to remove both the algorithm confound and the earlier corpus-version confound.
+  RESULT, directly answering the sizing question: unigram_sp at 16000 vs 18000 -- compression
+  0.4773 vs 0.4747 (0.5% relative difference), t_scale_fertility IDENTICAL (1.250 both),
+  t_core_fertility identical (1.0 both). Staying at the round 16K boundary costs approximately
+  nothing versus 18K.
+
+  REAL GAP FOUND AND DISCLOSED: the new matched-16K candidates did not become new G1 survivors
+  despite clearing every gate -- they were Pareto-dominated by their own siblings (v1's bpe_16000
+  beats v2's bpe_16000 slightly; unigram's 18000 weakly beats its own 16000 on compression).
+  g1_selection.py's four Pareto axes have NO vocab-size/embedding-parameter-cost axis --
+  Gate G1 as implemented will always prefer bigger vocab within a family given even a marginal
+  compression edge, with no mechanism to reward "smaller for equal real-world cost." Chris's
+  sizing question is answered here by reading candidates.jsonl directly, not by trusting G1's
+  survivor list -- a real, disclosed algorithm limitation, not silently patched (adding a real
+  embedding-cost axis is a design-doc-level change; C9's FLOPs/Time cost-matching principles
+  already gesture at this but G1 doesn't operationalize it yet).
+
+  Current real survivors remain: [bpe_sp_16000_v1_tcoreseed_bytefallback,
+  unigram_sp_18000_v2_tcoreseed_bytefallback] -- both genuinely earned, both still screening-stage
+  results on prototype-scale data. Result: matched_16k_comparison_and_g1_size_axis_gap on
+  RUN-20260718-224841-00387.

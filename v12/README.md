@@ -272,6 +272,19 @@ Worth doing once a v12 candidate wins the funnel and gets a Rust port.
   result on prototype-scale data, not a claim it's the final production
   tokenizer (that's TOK-2/TOK-3's job). Full detail: `pins/tok0_pins.yaml`
   → `wrapper_fix_and_first_real_survivor_2026_07_19`.
+- **Vocab-sizing experiment, same day**: Chris's architecture-driven
+  sizing constraint (round embedding boundaries like 16K/32K; 18K is
+  neither) motivated training matched controls at exactly 16000 for
+  both `bpe_sp` and `unigram_sp` on the same corpus. Direct answer:
+  `unigram_sp` at 16K vs 18K differ by ~0.5% compression with *identical*
+  `t_scale_fertility` and `t_core_fertility` — staying at the round
+  boundary costs almost nothing. Also surfaced a real gap: Gate G1's
+  four Pareto axes have no vocab-size/embedding-cost axis, so it won't
+  automatically prefer a smaller same-family candidate unless it's also
+  strictly better on compression — answering "bang for buck" needs
+  reading `candidates.jsonl` directly today, not just trusting the
+  survivor list. Full detail: `pins/tok0_pins.yaml` →
+  `vocab_sizing_experiment_2026_07_19`.
 - `pins/tok0_pins.yaml` — commitments C0–C10 are filled in from the
   design doc; most numeric bands (δ_switch, Δ, ε_match, census_N, teg_*,
   mini_ladder_sizes, tok4_candidate_cap) remain explicit
