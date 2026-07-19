@@ -477,4 +477,64 @@ vocab_sizing_experiment_2026_07_19: >
   Current real survivors remain: [bpe_sp_16000_v1_tcoreseed_bytefallback,
   unigram_sp_18000_v2_tcoreseed_bytefallback] -- both genuinely earned, both still screening-stage
   results on prototype-scale data. Result: matched_16k_comparison_and_g1_size_axis_gap on
+
+v11_pinned_replication_and_tok2_held_out_reversal_2026_07_20: >
+  CONTEXT: an earlier TOK-2 held-out comparison (see tok-2b-fixed-trunk / phase1 results in
+  tiny-model's model/v11-train/) found both bpe_sp_16000_v1_tcoreseed_bytefallback and
+  unigram_sp_18000_v2_tcoreseed_bytefallback beating v11 on held-out BPB (5.85% and 10.65%
+  respectively). Per Chris's own methodological critique, that comparison was flagged as resting
+  on an unverified assumption: v11's original training (tiny-model/model/v11-train/
+  train_tinystories.py) never pinned a TinyStories hub revision, so its exact training-time
+  document set could not be reconstructed -- its held-out cleanliness against the frozen
+  seed=777 evaluation set was ASSUMED, not verified, unlike the three v12 candidates (which
+  train against a pinned hub_sha and so are hash-checkable).
+
+  WHAT WAS BUILT: tiny-model/model/v11-train/train_v11_replication.py -- an exact replica of
+  v11's original training methodology (same architecture, native v11.model tokenizer, fixed
+  16M/8M token budget, seeds 42/43, two-phase full+frozen-FFN recipe) with one change:
+  revision=HUB_SHA pinned on both dataset loads, matching every other pinned run in this funnel.
+  eval_held_out.py was extended to hash-check BOTH phase1's seed=42 stream (59,715 documents
+  consumed, the same shared boundary the v12 candidates use) AND phase3's seed=43 stream
+  (30,608 documents), excluding the union (59,997 unique documents) from the frozen 2000-story
+  held-out set -- 49,927 seed=777 documents had to be skipped to find 2000 truly clean ones.
+
+  WHAT RAN: phase1 only (16.0M/16.0M tokens, real training, ~1h50m on M3 Max @ ~2490 tok/s).
+  Per Chris's explicit instruction, stopped intentionally right after model_full.pt saved,
+  before phase3 began -- phase3 (frozen-FFN retrain, 8M tokens) deferred to a future session.
+  train_v11_replication.py is unchanged and can be rerun to produce model_compiled.pt later.
+
+  RESULT -- REVERSES the earlier conclusion. On the exact same verified-clean 2000-story
+  held-out set (1,913,160 bytes):
+    v11_pinned_replication_full (verified clean):  held_out_bpb = 0.6846
+    v11 (original, unverified):                    held_out_bpb = 0.7900  (13.3% worse)
+    bpe_sp_16000_v1_tcoreseed_bytefallback:         held_out_bpb = 0.7461  (9.0% worse)
+    unigram_sp_18000_v2_tcoreseed_bytefallback:     held_out_bpb = 0.7062  (3.2% worse)
+    unigram_sp_16000_v2_tcoreseed_bytefallback:     held_out_bpb = 0.7058  (3.1% worse)
+  The verified-clean v11 replication beats every v12 TOK-1 survivor at matched byte budget,
+  phase1-only. v11's own two runs (original vs. pinned replication) share identical training
+  loss (2.1660 vs 2.1710, 0.23% apart) and identical tokenizer/compression (0.29092 tok/byte,
+  confirmed via held_out_compression matching exactly between the two v11 rows) yet differ by
+  13.3% on held-out BPB -- the gap is real model-quality variance from which exact documents
+  each run's seed=42 stream happened to draw (hub revision differs: unverified April run vs.
+  pinned July hub_sha), not a tokenizer or measurement artifact. Sanity-checked using the same
+  audit Chris requested on the previous (later-defended) result: held_out_compression is
+  computed per-checkpoint from that checkpoint's own real tok.encode() output and matches each
+  candidate's independently-measured intrinsic compression within 0.4-2.3% -- no cross-candidate
+  token-count contamination found.
+
+  CAVEATS, disclosed not hidden: (1) single run each side, no repeated-seed variance estimate --
+  the 13.3% gap between two nominally-identical-methodology v11 runs is itself evidence of
+  real run-to-run noise at this scale, so this result is directionally strong but not a
+  zero-uncertainty final answer; ideally wants multiple seeds before being treated as settled.
+  (2) phase1-only for every row here (matches what's being compared -- v11's original
+  model_full.pt vs. v12 candidates' equivalent checkpoints) -- NOT yet a comparison against
+  v11's true best "compiled"/frozen-FFN checkpoint, which needs phase3 to actually run.
+  (3) TinyStories-only evaluation, same as every prior TOK-2 result in this funnel --
+  broader-domain (code/math/JSON/multilingual) evaluation is still future work.
+
+  IMPLICATION: the funnel's provisional TOK-2 story ("v12's screening survivors beat the
+  incumbent") does not currently hold once the incumbent side of the comparison is held to the
+  same verification standard as the challengers -- exactly the failure mode Chris's critique
+  was aimed at catching. TOK-2 should not be considered decided in either direction until
+  phase3 is rerun for the replication and, ideally, more than one seed is run per side.
   RUN-20260718-224841-00387.

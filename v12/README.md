@@ -310,6 +310,22 @@ Worth doing once a v12 candidate wins the funnel and gets a Rust port.
   reading `candidates.jsonl` directly today, not just trusting the
   survivor list. Full detail: `pins/tok0_pins.yaml` →
   `vocab_sizing_experiment_2026_07_19`.
+- **TOK-2 real model training: first result reverses on verification.**
+  Actual TinyModel training (sibling `tiny-model` repo,
+  `model/v11-train/train_tok2.py`, byte-matched budgets) on both TOK-1
+  survivors + the v11 incumbent initially showed both v12 candidates
+  beating v11 on held-out BPB. That comparison rested on v11's ORIGINAL
+  training never having pinned a dataset revision — its held-out
+  cleanliness was assumed, not verified, unlike the pinned v12
+  candidates. A pinned-revision replication
+  (`train_v11_replication.py`) with hash-verified held-out disjointness
+  reverses it: the verified-clean v11 replication scores
+  `held_out_bpb=0.6846`, beating both `bpe_sp_16000` (0.7461, 9.0%
+  worse) and `unigram_sp_18000` (0.7062, 3.2% worse). Phase3
+  (frozen-FFN retrain) intentionally deferred — this is a phase1-only
+  comparison, single run per side, TinyStories-only. **TOK-2 is not
+  decided in either direction.** Full detail: `pins/tok0_pins.yaml` →
+  `v11_pinned_replication_and_tok2_held_out_reversal_2026_07_20`.
 - `pins/tok0_pins.yaml` — commitments C0–C10 are filled in from the
   design doc; most numeric bands (δ_switch, Δ, ε_match, census_N, teg_*,
   mini_ladder_sizes, tok4_candidate_cap) remain explicit
