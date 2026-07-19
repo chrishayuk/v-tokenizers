@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    name: Rust (build, test, fmt, clippy)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: fmt --check
+        run: cargo fmt --check
+      - name: clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: build
+        run: cargo build --workspace
+      - name: test
+        run: cargo test --workspace
+
+  rust-coverage:
+    name: Rust coverage (cargo-llvm-cov)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - uses: Swatinem/rust-cache@v2
+      - name: coverage
+        run: cargo llvm-cov --workspace --lcov --output-path lcov.info
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lcov.info
+          path: lcov.info
+      # NOTE: no enforced per-file coverage threshold yet -- v11-cli/
+      # v11-builder/v11-bench have ~0 dedicated unit tests today. Getting
+      # every file to 90% is tracked as real follow-up test-writing work
+      # (see README "Coverage" section), not something to gate CI on
+      # before it's actually true.
+
+  python-harness:
+    name: Python harness smoke tests
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: install python deps
+        run: pip install sentencepiece tokenizers
+      - name: build v11-cli (release, needed by bench roundtrip)
+        run: cargo build --release -p v11-cli
+      - name: g1_selection unit tests
+        run: python3 bench/test_g1_selection.py
+      - name: MSI canonicalizer parity
+        run: python3 bench/msi/test_canonicalizer_parity.py
+      - name: harness g0-smoke
+        run: python3 bench/tokenizer_bench.py g0-smoke
+      - name: harness roundtrip (real gate check, not required to pass yet --
+          see pins/tok0_pins.yaml incumbent_ledger for the known open findings)
+        run: python3 bench/tokenizer_bench.py roundtrip
+        continue-on-error: true

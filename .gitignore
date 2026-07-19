@@ -1,0 +1,35 @@
+# Rust build output
+target/
+**/target/
+*.rlib
+*.rmeta
+
+# Python wheels and sdists from maturin
+*.whl
+*.tar.gz
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+.pytest_cache/
+dist/
+build/
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
+.claude/
+
+# v12: generated corpora / trained candidates / eval output — tracked as
+# real artifacts in the chuk-experiments server instead, not in git
+# history. Scripts, pins, manifests, and README stay tracked.
+v12/corpus/c8_corpus_v0.jsonl
+v12/corpus/c8_corpus_v0.txt
+v12/corpus/c8_code_corpus.jsonl
+v12/training/candidates/
+v12/training/candidates.jsonl
+bench/reports/

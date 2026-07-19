@@ -1,0 +1,59 @@
+name: Publish (manual, v11 only)
+
+# SKELETON -- not wired to fire automatically (no push/tag trigger), and the
+# actual publish steps are commented out below. v11 is publish-*ready*
+# (stable, tests pass, fmt/clippy clean) but has not actually been published
+# anywhere yet -- that's a separate, explicit, external action that needs a
+# human decision (and CARGO_REGISTRY_TOKEN / PyPI trusted-publisher setup,
+# neither of which exist yet), not something CI should do on its own.
+#
+# v12 is deliberately NOT included here -- it's an active, pre-registered
+# research funnel (see v12/pins/tok0_pins.yaml) and stays unpublished until
+# a candidate wins the funnel.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "publish" to confirm you mean to actually publish v11 to crates.io/PyPI'
+        required: true
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: require explicit confirmation
+        if: ${{ github.event.inputs.confirm != 'publish' }}
+        run: |
+          echo "Confirmation input did not match 'publish' -- stopping without publishing anything."
+          exit 1
+
+  # Ordering matters: v11-cli/v11-builder/v11-bench/v11-demos/v11-python all
+  # depend on v11-core via { path = "../core", version = "0.1.0" } (needed
+  # so `cargo publish` works at all -- path-only deps are rejected). Until
+  # v11-core is actually live on crates.io, publishing any dependent crate
+  # fails with "no matching package named `v11-core` found" (verified via
+  # `cargo publish -p v11-cli --dry-run` 2026-07-19) -- publish v11-core
+  # FIRST, wait for it to appear on the index, then the rest.
+  #
+  # publish-crate:
+  #   needs: guard
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@stable
+  #     - run: cargo publish -p v11-core --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+  #     - run: cargo publish -p v11-builder --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+  #     - run: cargo publish -p v11-cli --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+  #
+  # publish-python:
+  #   needs: guard
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: PyO3/maturin-action@v1
+  #       with:
+  #         command: publish
+  #         args: --skip-existing -m v11/python/Cargo.toml
+  #       env:
+  #         MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
