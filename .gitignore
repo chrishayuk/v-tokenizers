@@ -34,3 +34,8 @@ v12/corpus/c8_code_corpus.jsonl
 v12/training/candidates/
 v12/training/candidates.jsonl
 bench/reports/
+
+# TOK-2 real model-training checkpoints (~330MB each) -- tracked as real
+# artifacts in chuk-experiments, not git history. Small result JSONs and
+# the training log stay tracked.
+v12/training/tok2_runs/*/model_full.pt

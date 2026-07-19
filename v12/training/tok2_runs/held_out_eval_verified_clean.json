@@ -1,0 +1,46 @@
+{
+  "seed": 777,
+  "n_stories": 2000,
+  "total_bytes": 1911309,
+  "verified_excluded_from_v12_training_consumption": true,
+  "v11_cleanliness_verified": false,
+  "v11_caveat": "v11's original training never pinned a dataset revision; its exact training-time document set can't be reconstructed, so this held-out set's disjointness from v11's actual training data is NOT verified, only assumed. Needs a v11 replication under this pinned-revision harness.",
+  "results": {
+    "v11": {
+      "name": "v11",
+      "held_out_loss": 1.8769706194841653,
+      "held_out_bpb": 0.788696380739565,
+      "held_out_compression": 0.29125798078698945,
+      "n_chunks": 2174,
+      "n_stories": 2000,
+      "total_bytes": 1911309
+    },
+    "bpe_sp_16000_v1_tcoreseed_bytefallback": {
+      "name": "bpe_sp_16000_v1_tcoreseed_bytefallback",
+      "held_out_loss": 1.286795146898064,
+      "held_out_bpb": 0.7425611820636069,
+      "held_out_compression": 0.3999892220462521,
+      "n_chunks": 2986,
+      "n_stories": 2000,
+      "total_bytes": 1911309
+    },
+    "unigram_sp_18000_v2_tcoreseed_bytefallback": {
+      "name": "unigram_sp_18000_v2_tcoreseed_bytefallback",
+      "held_out_loss": 1.6913616168476877,
+      "held_out_bpb": 0.7047254721710738,
+      "held_out_compression": 0.2888078275150695,
+      "n_chunks": 2156,
+      "n_stories": 2000,
+      "total_bytes": 1911309
+    },
+    "unigram_sp_16000_v2_tcoreseed_bytefallback": {
+      "name": "unigram_sp_16000_v2_tcoreseed_bytefallback",
+      "held_out_loss": 1.6901550067377886,
+      "held_out_bpb": 0.7043668853220797,
+      "held_out_compression": 0.28886694930019163,
+      "n_chunks": 2156,
+      "n_stories": 2000,
+      "total_bytes": 1911309
+    }
+  }
+}

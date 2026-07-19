@@ -1,0 +1,40 @@
+{
+  "candidate": "unigram_sp_18000_v2_tcoreseed_bytefallback",
+  "phase1": {
+    "loss": 2.1690425713820085,
+    "bpb": 0.8984125445633535,
+    "elapsed_s": 4885.728917121887,
+    "tokens_done": 15425024,
+    "tokens_per_sec": 3157.159200123338
+  },
+  "vocab_size": 18000,
+  "n_params": 87880192,
+  "phase1_tokens_target": 15425118,
+  "phase3_tokens_target": 7712559,
+  "reference_bytes_phase1": 53727333.78106111,
+  "compression_used": 0.2871,
+  "arch": {
+    "version": "v11",
+    "vocab_size": 71261,
+    "dim": 512,
+    "n_layers": 20,
+    "ffn_dim": 2048,
+    "n_heads": 8,
+    "n_kv_heads": 4,
+    "max_seq": 256,
+    "core": "tiny-model-v11",
+    "architecture": "TinyModel",
+    "model_type": "tinymodel",
+    "rope_theta": 10000.0,
+    "tie_embeddings": true,
+    "tokenizer": "v11",
+    "training": {
+      "corpus": "TinyStories",
+      "phase2_tokens": 16000000,
+      "phase3_tokens": 8000000,
+      "phase2_lr": 0.0003,
+      "phase3_lr": 0.00015,
+      "phase3_strategy": "frozen_ffn_retrain_attention"
+    }
+  }
+}

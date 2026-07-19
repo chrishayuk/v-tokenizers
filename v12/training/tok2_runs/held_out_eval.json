@@ -1,0 +1,33 @@
+{
+  "seed": 777,
+  "n_stories": 2000,
+  "results": {
+    "v11": {
+      "name": "v11",
+      "held_out_loss": 1.955932352706971,
+      "held_out_bpb": 0.8058785179526704,
+      "held_out_compression": 0.2855888251041198,
+      "n_chunks": 1976,
+      "n_stories": 2000,
+      "total_bytes": 1771757
+    },
+    "bpe_sp_16000_v1_tcoreseed_bytefallback": {
+      "name": "bpe_sp_16000_v1_tcoreseed_bytefallback",
+      "held_out_loss": 1.3761940523442933,
+      "held_out_bpb": 0.7931719840555449,
+      "held_out_compression": 0.3994966578373897,
+      "n_chunks": 2764,
+      "n_stories": 2000,
+      "total_bytes": 1771757
+    },
+    "unigram_sp_18000_v2_tcoreseed_bytefallback": {
+      "name": "unigram_sp_18000_v2_tcoreseed_bytefallback",
+      "held_out_loss": 1.7895421313281035,
+      "held_out_bpb": 0.7426706609270635,
+      "held_out_compression": 0.28766021525525226,
+      "n_chunks": 1990,
+      "n_stories": 2000,
+      "total_bytes": 1771757
+    }
+  }
+}
