@@ -49,17 +49,22 @@ v-tokenizers/
   `cargo clippy -- -D warnings` both clean. Verified token-for-token
   identical to real HF `tokenizers` on `tokenizer.json` (a Python/Rust
   parity bug was found and fixed 2026-07-19 -- see
-  `v12/pins/tok0_pins.yaml` `incumbent_ledger`). **Not** verified against
-  the native SentencePiece `v11.model` used to build the frozen C2 eval
-  stream elsewhere -- there's a real, disclosed, unresolved divergence
-  there (`v11_three_way_implementation_divergence` in chuk-experiments).
-  Don't publish claiming "byte-identical to SentencePiece" until that's
-  resolved; "byte-identical to the `tokenizer.json`/`tokenizers`-library
-  path" is the accurate, verified claim today.
+  `v12/pins/tok0_pins.yaml` `incumbent_ledger`). The native SentencePiece
+  `v11.model` used to build the frozen C2 eval stream elsewhere diverges
+  from `tokenizer.json` (a real 3-way implementation-divergence finding)
+  -- RESOLVED 2026-07-19: `tokenizer.json`'s behavior is canonical for
+  v11 going forward (`incumbent_ledger.RESOLVED_2026_07_19_canonical_tokenizer_decision`);
+  `v11.model`/native-SentencePiece is a documented divergent artifact,
+  not an open question. "Byte-identical to the `tokenizer.json`/
+  `tokenizers`-library path" is the accurate claim; "byte-identical to
+  SentencePiece" is not, and shouldn't be claimed when publishing.
 - **v12**: mid-funnel. 9 real trained candidates + the v11 incumbent
-  evaluated; Gate G1 selection is implemented and unit-tested but blocked
-  on 3 still-undecided threshold pins (a research decision, not
-  engineering). See `v12/README.md`.
+  evaluated; Gate G1's three threshold pins are decided (2026-07-19, see
+  `g1_threshold_decision_log_2026_07_19` -- decided post-hoc, after the
+  candidate grid already existed, disclosed as such) and the first real
+  selection has run: `survivors = [byte_level_bpe_8000_v0]`. A genuine
+  screening-stage result on prototype-scale data, not a final winner. See
+  `v12/README.md`.
 - **Coverage**: no per-file threshold enforced in CI yet.
   `v11-cli`/`v11-builder`/`v11-bench` have ~0 dedicated unit tests today
   (their logic is currently exercised indirectly via the bench harness's

@@ -101,16 +101,65 @@ open_pins:
   delta_D1: null            # PIN: not yet decided — D1 addressing-rank non-inferiority margin
   D2_window_W: 2            # default per doc (±2); confirm before TOK-3
   D2_pass_gap_pp: 1         # default per doc (1pp); confirm before TOK-3
-  MSI_canonical_min: null   # PIN: not yet decided — PROVISIONAL floor, pending shadow-lane validation at TOK-2c
+  MSI_canonical_min: 0.25   # DECIDED 2026-07-19 (post-hoc, see decision log below) — still PROVISIONAL per doc's own framing, pending real shadow-lane validation at TOK-2c
   census_N: null            # PIN: not yet decided — accidental-dead undertrained-count threshold
-  census_F_max: null        # PIN: not yet decided — T-core fertility threshold reject
-  census_R_max: null        # PIN: not yet decided — category-5 fraction threshold reject
+  census_F_max: 2.0         # DECIDED 2026-07-19 (post-hoc, see decision log below)
+  census_R_max: 0.95        # DECIDED 2026-07-19 (post-hoc, see decision log below) — deliberately permissive, see caveat
   teg_min_baseline_checkpoints: null   # PIN: not yet decided
   teg_E_bound_policy: "constrained via extended incumbent baseline run"  # mechanism pinned, numeric bound TBD
   teg_max_extrapolation_fraction: null # PIN: not yet decided
   teg_ci_level: 0.90        # default per doc
   mini_ladder_sizes: [null, null]  # PIN: not yet decided — two sizes, both well below 115M
   tok4_candidate_cap: null  # PIN: not yet decided
+
+g1_threshold_decision_log_2026_07_19: >
+  Chris explicitly instructed resolving the three TOK-1 threshold pins (census_F_max,
+  census_R_max, MSI_canonical_min) rather than leaving them open. Recording plainly, not
+  glossing over it: this decision was made AFTER real candidate data (candidates.jsonl, 9
+  trained candidates + incumbent) already existed and had been read -- it does NOT carry the
+  data-snooping-immunity guarantee that genuine pre-registration (deciding thresholds before
+  any candidate exists) would have provided. Treated as an honest, principled-reasoning
+  decision, not a blind one, and disclosed as such rather than silently presented as if it
+  were pre-registered.
+
+  Reasoning per threshold, stated independent of which specific candidates it does/doesn't
+  admit (checked against the data only as a sanity pass afterward, not fit to a target
+  outcome):
+  - census_F_max = 2.0: "no candidate should cost more than 2x the ideal single-token cost
+    (fertility 1.0) on priority T-core concepts" -- a round, domain-motivated multiplicative
+    bar consistent with the whole point of v11's knowledge-first redesign (guaranteed
+    single-token coverage of priority targets). Sanity check against real data: SP-family and
+    incumbent cluster at 1.0-1.16 (comfortably under); byte_level_bpe at 1.6-1.9 (under);
+    pure_byte at 4.29 (over, but exempt as Branch B regardless of this threshold).
+  - census_R_max = 0.95: DELIBERATELY PERMISSIVE, not a real quality bar yet. The
+    category_5_fraction measurement it gates is computed against the 32-file harness sample
+    corpus (see evaluate_candidate.py), not the real C8/C2-scale corpus -- a small sample
+    structurally cannot exercise most of a several-thousand-item vocab, so every candidate's
+    measured category-5 fraction is inflated by the instrument itself, not a genuine estimate
+    of true accidental-dead behavior. Setting a tight threshold from this data would be
+    scientifically unsound. 0.95 is close to a no-op (only rejects near-total non-exercise) so
+    the gate can run without pretending this proxy is trustworthy yet. MUST be recalibrated
+    once category-5 is measured at real C8/C2 scale -- do not treat 0.95 as a considered
+    quality bar in any later analysis.
+  - MSI_canonical_min = 0.25: the design doc's own pin comment already frames this as
+    "PROVISIONAL floor, pending shadow-lane validation at TOK-2c" -- i.e. the doc itself defers
+    a real decision to a later stage. Set low (0.25, the floor already met by every
+    SentencePiece-family candidate) rather than aspirationally high, specifically because the
+    measured msi_canonical values here are MSI-STRICT, a LOWER BOUND proxy (class-2
+    canonicalization isn't implemented yet -- see bench/msi/canonicalizer.py), not the true
+    MSI-canonical rate. A high floor now would hard-eliminate every non-byte-level candidate
+    based on an admittedly incomplete measurement, pre-empting exactly the shadow-lane/TOK-2c
+    validation the doc says should do that job.
+
+  Practical effect on THIS candidate grid, computed independently of the threshold values
+  above: 6 of 9 real candidates (all unigram_sp/bpe_sp) are eliminated at the earlier HARD
+  REJECT step (round_trip_pass=false, unk_count=144 -- see the already-registered
+  round-trip/UNK findings) regardless of what these three thresholds are set to. Only
+  byte_level_bpe_4000_v0 and byte_level_bpe_8000_v0 reach the threshold/Pareto stage; both
+  clear all three thresholds above by a wide margin. byte_level_bpe_8000_v0 Pareto-dominates
+  byte_level_bpe_4000_v0 on all three minimize axes (compression, t_core_fertility,
+  t_scale_fertility) with a tie on t_cell_coverage, so it wins its family outright (no
+  tie-break needed). Real `grid-screen` output registered in chuk-experiments.
 
 incumbent_ledger:
   vocab_total: 71261     # confirmed against ../../v11/artifacts/v11.vocab.json (71260 pieces + special ids)
@@ -181,6 +230,34 @@ incumbent_ledger:
     Metaspace-only behavior) is canonical for TOK-0/C5 purposes, a decision for Chris. Registered
     as result `v11_three_way_implementation_divergence` (verdict fail) on
     RUN-20260718-224711-00385.
+  RESOLVED_2026_07_19_canonical_tokenizer_decision: >
+    Per Chris's explicit instruction, DECIDED (not a further code patch -- a provenance/
+    authority decision): tokenizer.json's behavior (Metaspace, split on literal space 0x20
+    only, normalizer=null) is CANONICAL for v11 going forward, in this repo and any consumer
+    of it. Reasoning: (1) it's what the actual shipped artifacts (v11/artifacts/tokenizer.json,
+    v11.vocab.bin) and the production Rust runtime (v11-core, post-fix) implement; (2) two
+    independent implementations -- the compiled Rust binary and the real HF `tokenizers`
+    library -- now agree on it exactly, verified token-for-token, which is the strongest
+    concrete evidence available for what "v11" actually is as a running system; (3) the
+    nmt_nfkc/remove_extra_whitespaces behavior native SentencePiece applies via v11.model was
+    dropped at whatever export produced tokenizer.json -- meaning tokenizer.json was already
+    the intended shipped/normalized artifact, and the export silently changed behavior nobody
+    caught until this session, not the other way around.
+
+    Consequence, stated plainly rather than swept under the rug: the already-frozen,
+    already-built C2 24M-token eval stream (owned by the separate corpus-atlas project, built
+    via native SentencePiece directly against v11.model) was tokenized under DIFFERENT
+    (whitespace-collapsing) semantics than the now-canonical tokenizer.json path. This is now
+    a documented, known characteristic of that specific frozen artifact -- not an open
+    question blocking other work, and NOT something regenerated as part of this decision:
+    regenerating C2 is out of scope here (lives in a different repo/project, corpus-atlas, and
+    is an expensive multi-million-token build Chris would need to explicitly commission, not
+    something to trigger unilaterally while resolving a tokenizer-canonicity question).
+    Anyone consuming C2 for cross-tokenizer comparison should know its raw-text re-tokenization
+    (via a0_dump_stream.py, per-candidate) will differ from tokenizer.json-based candidates
+    specifically on documents containing tab/newline/multi-space runs -- a real, bounded,
+    disclosed caveat on that artifact, not a blocker on TOK-1 grid-screen or anything in this
+    repo.
 
 tok1_grid_status:
   description: "Real evaluation status of the TOK-1 candidate grid, as of 2026-07-19. See tok-1-intrinsic-screen writeup v4 for full detail and candidates.jsonl (artifact tok-v12-candidates-grid-results:latest) for the raw rows."

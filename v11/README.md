@@ -43,8 +43,12 @@ Rust stdlib types (`Vec`, `Option`, `Result`).
   `transformers`/`tokenizers`-library path — it does **not** extend to
   loading `v11.model` natively via the `sentencepiece` library, which has
   its own `nmt_nfkc` normalizer that `tokenizer.json` doesn't carry and
-  diverges materially (a real, disclosed, unresolved finding — see
-  `v11_three_way_implementation_divergence`).
+  diverges materially on text with tab/newline/multi-space runs. RESOLVED
+  2026-07-19: `tokenizer.json`'s behavior is canonical for v11 going
+  forward (see `v12/pins/tok0_pins.yaml`
+  `incumbent_ledger.RESOLVED_2026_07_19_canonical_tokenizer_decision`) —
+  `v11.model` native-SentencePiece loading is a documented divergent
+  artifact, not an open question.
 - **~3M tokens/sec** encode throughput on a single Apple M3 thread (release
   build).
 - **~28M tokens/sec** decode.

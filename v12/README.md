@@ -191,22 +191,40 @@ Worth doing once a v12 candidate wins the funnel and gets a Rust port.
     `pins/tok0_pins.yaml` `incumbent_ledger.newly_discovered_2026_07_19_b`.
     `candidates.jsonl`'s `v11_incumbent` row carries a `CAVEAT_parity_gap`
     field rather than being presented as authoritative.
-  Real `grid-screen` selection is still correctly blocked — see below.
+- **Gate G1 threshold pins decided, and the first real selection run
+  completed (2026-07-19).** Per Chris's explicit instruction,
+  `census_F_max=2.0`, `census_R_max=0.95`, `MSI_canonical_min=0.25` are
+  now set — full independently-motivated reasoning, plus the honest
+  caveat that this was decided *after* the candidate grid already
+  existed (not blind pre-registration), in `pins/tok0_pins.yaml` →
+  `g1_threshold_decision_log_2026_07_19`. Running `bench/tokenizer_bench.py
+  grid-screen` for real now gives **`survivors = [byte_level_bpe_8000_v0]`**
+  — `v11_incumbent`/`pure_byte_v0` exempt, all 6 `unigram_sp`/`bpe_sp`
+  candidates hard-rejected on the already-known round-trip/UNK finding
+  (unaffected by the threshold choice), `byte_level_bpe_8000_v0`
+  Pareto-dominating `byte_level_bpe_4000_v0` outright. This is the
+  correct, honest output of the algorithm on today's prototype-scale
+  data — not a claim that it's the final TOK-1 winner once C8 reaches
+  real scale.
 - Everything under `targets/` is seed content, not the frozen C8-derived
-  sets — `t_core` in particular is illustrative only.
+  sets — `t_core` in particular is illustrative only. (The G1 result
+  above is downstream of this seed data too — a real screening result,
+  not yet a final one.)
 - `pins/tok0_pins.yaml` — commitments C0–C10 are filled in from the
-  design doc; the numeric bands (δ_switch, Δ, ε_match, MSI_canonical_min,
-  F_max, R_max, N, W, ...) are explicit `PIN: null # not yet decided` —
-  these are research decisions for Chris, not something to invent.
+  design doc; most numeric bands (δ_switch, Δ, ε_match, census_N, teg_*,
+  mini_ladder_sizes, tok4_candidate_cap) remain explicit
+  `PIN: null # not yet decided` — research decisions for Chris, not
+  something to invent, and not needed by anything that's run so far.
 
 ## Not done here (needs compute / corpus / a human decision)
 
-The real `grid-screen` (screening the full 4×4×3 candidate grid) needs
-`census_F_max`/`census_R_max`/`MSI_canonical_min` decided — that's now
-the *only* blocker: `candidates.jsonl` has 9 real candidates + the
-incumbent ready as input, and `g1_selection.select_survivors` is
-implemented and unit-tested. This is a research decision for Chris, not
-an engineering gap. TOK-2a/b/c through TOK-4 model
+Gate G1 has run for real (`survivors = [byte_level_bpe_8000_v0]`, see
+above) — but only on the prototype-scale v0 C8 corpus with stub T-core
+targets and a tiny-sample category-5 proxy. Re-running it once C8 is at
+real frozen scale, T-core is the real frozen target set, and
+`census_R_max` is recalibrated against real-scale category-5 measurements
+(today's 0.95 is deliberately permissive/near-no-op, not a considered bar
+— see the decision log) is real remaining work, not done here. TOK-2a/b/c through TOK-4 model
 training and TOK-5 freeze need GPU compute and/or the frozen C10
 mini-ladder corpus (not yet built, no precedent found anywhere). Those
 are registered as experiments and queued as runs in `chuk-experiments`.
