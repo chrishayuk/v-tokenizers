@@ -399,3 +399,50 @@ external_review_2026_07_19: >
      funnel design -- correctly identifies that G1's intrinsic metrics can only prune candidates,
      not select a production tokenizer. NOT started -- needs GPU compute and an explicit
      scoping decision from Chris, same as every other TOK-2+ item in this file.
+
+wrapper_fix_and_first_real_survivor_2026_07_19: >
+  Per Chris's instruction ("yeah do the wrapper fix first"): built the HF Tokenizer wrapper
+  identified as the real fix in hardening_pass_2026_07_19_round2. A byte_fallback-trained
+  SentencePiece model's pieces+scores loaded into a real tokenizers.Tokenizer
+  (models.Unigram(vocab, unk_id, byte_fallback=True) + explicit non-collapsing
+  pre_tokenizers.Metaspace, matching RESOLVED_2026_07_19_canonical_tokenizer_decision) instead
+  of native SentencePieceProcessor.encode()/decode(). New backend: HFWrappedSPBackend in
+  evaluate_candidate.py.
+
+  Found and fixed a real bug while building it: decoders.Metaspace() alone leaves <0xNN>
+  byte-fallback tokens as their literal escape-string text on decode ("<0x0A>" as 6 literal
+  chars, not the actual newline byte) -- fixed by chaining
+  decoders.Sequence([decoders.ByteFallback(), decoders.Metaspace(...)]), ByteFallback first to
+  reassemble raw bytes/multi-byte UTF-8 before Metaspace converts markers back to spaces.
+  Confirmed the Unigram model type works for BOTH unigram- and bpe-trained SentencePiece models
+  (bpe-trained pieces carry usable merge-order-derived scores too) -- no separate BPE-merge-list
+  converter needed.
+
+  RESULT: 0 UNK, 0/32 round-trip failures -- a COMPLETE fix, not partial (was 32/32 round-trip
+  failures via native SPBackend on the SAME trained model, despite 0 UNK already there too).
+  Re-evaluated all 8 byte_fallback-trained candidates via this backend, kept native-SP
+  evaluation side by side as *_native rows rather than silently replacing them.
+
+  IMPORTANT: this fixes v12 CANDIDATES, not v11 itself. Checked directly: v11's own
+  tokenizer.json, loaded via plain HF tokenizers (bypassing the Rust CLI), ALREADY uses this
+  exact canonical Metaspace and STILL shows 543 UNK / 32-of-32 round-trip fail -- v11's gap is
+  that its vocab has no byte-fallback pieces at all (v11-builder never added byte_fallback
+  support), a vocab-construction gap, not a pretokenizer/wrapping one. Fixing v11 itself means
+  changing its frozen vocab, tied to already-trained TinyModel embedding weights -- a separate,
+  much bigger decision, explicitly NOT done here and flagged as distinct from what was fixed.
+
+  COMBINING both validated fixes from this session (T-core seeding + this wrapper fix) into one
+  candidate, bpe_sp_16000_v1_tcoreseed_bytefallback, produces THE FIRST REAL, NON-EXEMPT GATE G1
+  SURVIVOR in this entire funnel: real grid-screen run gives survivors=[bpe_sp_16000_v1_tcoreseed_bytefallback].
+  t_core_fertility=1.0, round_trip_pass=true, unk_count=0, category_5_fraction=0.94 (under
+  R_max=0.95). Pareto-dominates its sibling outright, no tie-break needed. All plain
+  unigram_sp/bpe_sp candidates (with byte_fallback but WITHOUT T-core seeding) still
+  threshold-reject on fertility; neither fix alone was sufficient, both together were needed.
+
+  SCOPE, stated plainly: a real, earned SCREENING-stage survivor on prototype-scale data (21.6MB
+  C8, not frozen; 538-item T-core, not the doc's frozen commitment; category-5 measured on the
+  32-file v11/corpus sample, not real C8/C2 scale). NOT a claim this is the final production
+  tokenizer -- that needs TOK-2/TOK-3 real model training, per this doc's own design and per the
+  external review's own correct point that intrinsic metrics can only prune, not select.
+  Results: hf_wrapper_fixes_roundtrip_completely, first_real_g1_survivor on
+  RUN-20260718-224841-00387.

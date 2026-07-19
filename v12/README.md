@@ -242,6 +242,36 @@ Worth doing once a v12 candidate wins the funnel and gets a Rust port.
   compete — though it still hits the same round-trip/UNK gap as every
   other SentencePiece candidate, a separate, still-open problem. Full
   detail: `pins/tok0_pins.yaml` → `hardening_pass_2026_07_19`.
+- **Round 2, same day: byte_fallback fixes UNK completely, round-trip
+  needed a real HF-Tokenizer wrapper — and then there was a real
+  survivor.** SentencePiece's `byte_fallback` option eliminates UNK
+  entirely (0 across the sample corpus) for retrained unigram_sp/bpe_sp
+  candidates, but round-trip still failed via native
+  `SentencePieceProcessor` — root-caused to SentencePiece's mandatory
+  internal metaspace step, which collapses runs of literal spaces
+  regardless of normalization settings, unreachable via any public
+  training-time toggle. Fix: load the SAME trained pieces+scores into a
+  real `tokenizers.Tokenizer` (`models.Unigram` + explicit
+  non-collapsing `Metaspace`, matching the canonical-tokenizer decision)
+  instead of native SentencePiece encode/decode
+  (`HFWrappedSPBackend` in `evaluate_candidate.py`). Found and fixed a
+  real bug along the way: byte-fallback `<0xNN>` tokens need
+  `decoders.ByteFallback()` chained *before* `Metaspace` on decode, or
+  they come back as literal escape-string text instead of the actual
+  byte. Result: **0 UNK, 0/32 round-trip failures — a complete fix.**
+  Verified this does *not* fix v11 itself: v11's own `tokenizer.json`
+  already uses this exact canonical pretokenizer via the plain HF
+  library and still shows 543 UNK / 32-of-32 round-trip fail — v11's
+  vocab simply has no byte-fallback pieces, a different, deeper,
+  separate gap (fixing it means changing v11's frozen vocab, tied to
+  already-trained model weights — not attempted). Combining this fix
+  with the T-core seeding fix into one candidate produced
+  **the funnel's first real, non-exempt Gate G1 survivor**:
+  `bpe_sp_16000_v1_tcoreseed_bytefallback` — `t_core_fertility=1.0`,
+  `round_trip_pass=true`, `unk_count=0`. A real, earned screening-stage
+  result on prototype-scale data, not a claim it's the final production
+  tokenizer (that's TOK-2/TOK-3's job). Full detail: `pins/tok0_pins.yaml`
+  → `wrapper_fix_and_first_real_survivor_2026_07_19`.
 - `pins/tok0_pins.yaml` — commitments C0–C10 are filled in from the
   design doc; most numeric bands (δ_switch, Δ, ε_match, census_N, teg_*,
   mini_ladder_sizes, tok4_candidate_cap) remain explicit
@@ -250,8 +280,10 @@ Worth doing once a v12 candidate wins the funnel and gets a Rust port.
 
 ## Not done here (needs compute / corpus / a human decision)
 
-Gate G1 has run for real, three times now (`survivors = []` the last
-two) — see `hardening_pass_2026_07_19` and `_round2` in
+Gate G1 has run for real, four times now — `survivors = []` the first
+three, then `survivors = [bpe_sp_16000_v1_tcoreseed_bytefallback]` once
+both real fixes below landed together — see `hardening_pass_2026_07_19`,
+`_round2`, and `wrapper_fix_and_first_real_survivor_2026_07_19` in
 `pins/tok0_pins.yaml` for the full sequence. Status of each known gap:
 - **T-core fertility (SentencePiece family)**: SOLVED, validated —
   seeding T-core as `user_defined_symbols` closes it to exactly 1.0.
@@ -259,15 +291,17 @@ two) — see `hardening_pass_2026_07_19` and `_round2` in
   technique doesn't transfer cleanly to the `tokenizers` library (two
   approaches tried, both documented as real negative results). Needs a
   custom `PreTokenizer`/normalizer-level intervention.
-- **Round-trip/UNK (SentencePiece family)**: PARTIALLY solved —
-  `byte_fallback` fixes UNK completely (0 across the sample corpus) but
-  round-trip still fails, root-caused to a structural SentencePiece
-  behavior (its built-in metaspace step collapses consecutive literal
-  spaces) that no training-time toggle reaches. Real fix needs loading
-  the trained vocab through a properly-constructed HF `tokenizers.Tokenizer`
-  (explicit non-collapsing Metaspace) instead of native
-  `SentencePieceProcessor` — same technique that makes `tokenizer.json`
-  diverge from `v11.model` in the first place. Not built.
+- **Round-trip/UNK (SentencePiece family)**: SOLVED, validated —
+  `byte_fallback` fixes UNK (0 across the sample corpus); wrapping the
+  trained pieces+scores in a real `tokenizers.Tokenizer`
+  (`HFWrappedSPBackend`, `models.Unigram` + explicit non-collapsing
+  `Metaspace` + `ByteFallback` decoder) instead of native
+  `SentencePieceProcessor` fixes round-trip completely (0/32 failures).
+  Same technique that makes `tokenizer.json` diverge from `v11.model` in
+  the first place, now put to use deliberately. NOT applied to v11
+  itself — v11's gap is a missing-byte-fallback-pieces vocab problem,
+  not a wrapping problem (verified directly), and fixing it means
+  changing v11's frozen vocab. A separate, bigger, not-yet-made decision.
 - **Corpus domain balance**: code's mixture share drifted from 15.7% to
   0.5% when prose/math were scaled and code wasn't (see above) — needs
   domain proportions frozen by bytes, not done yet.

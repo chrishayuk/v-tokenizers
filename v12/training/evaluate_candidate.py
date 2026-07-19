@@ -65,6 +65,59 @@ class SPBackend:
         return self.sp.unk_id()
 
 
+class HFWrappedSPBackend:
+    """Loads a SentencePiece-trained (unigram or bpe) model's pieces+scores
+    into a REAL HF tokenizers.Tokenizer (Unigram model + explicit
+    non-collapsing Metaspace pre_tokenizer/decoder + ByteFallback decoder)
+    instead of using native SentencePieceProcessor.encode()/decode().
+
+    This exists because native SentencePiece's own encode/decode pipeline
+    cannot be made to round-trip correctly through any public training-time
+    toggle: its mandatory built-in metaspace step collapses runs of literal
+    spaces regardless of normalization_rule_name (see
+    byte_fallback_fixes_unk_not_roundtrip in chuk-experiments / pins.yaml
+    hardening_pass_2026_07_19_round2). Wrapping the SAME trained vocab in a
+    real tokenizers.Tokenizer with the canonical Metaspace behavior
+    (RESOLVED_2026_07_19_canonical_tokenizer_decision) bypasses that
+    entirely -- verified: 0 UNK, 0/32 round-trip failures on v11/corpus,
+    for both unigram- and bpe-trained models, only once decoders.ByteFallback()
+    is chained before decoders.Metaspace() (without it, <0xNN> byte-fallback
+    pieces decode back as their literal escape-string text, not raw bytes --
+    found and fixed while building this backend).
+
+    Only meaningful for candidates trained with --byte-fallback (otherwise
+    there's no <0xNN> piece to reach for uncovered bytes and this backend
+    degrades to the same UNK behavior as SPBackend, just via a different
+    code path).
+    """
+
+    def __init__(self, model_path):
+        import sentencepiece as spm
+        from tokenizers import Tokenizer, decoders, models, pre_tokenizers
+
+        sp = spm.SentencePieceProcessor(model_file=str(model_path))
+        vocab = [(sp.id_to_piece(i), sp.get_score(i)) for i in range(sp.vocab_size())]
+        model = models.Unigram(vocab, unk_id=sp.unk_id(), byte_fallback=True)
+        self.tok = Tokenizer(model)
+        self.tok.pre_tokenizer = pre_tokenizers.Metaspace(replacement="▁", prepend_scheme="always", split=True)
+        self.tok.decoder = decoders.Sequence(
+            [decoders.ByteFallback(), decoders.Metaspace(replacement="▁", prepend_scheme="always")]
+        )
+        self._unk_id = sp.unk_id()
+
+    def vocab_size(self):
+        return self.tok.get_vocab_size()
+
+    def encode(self, text):
+        return self.tok.encode(text).ids
+
+    def decode(self, ids):
+        return self.tok.decode(ids, skip_special_tokens=False)
+
+    def unk_id(self):
+        return self._unk_id
+
+
 class ByteLevelBPEBackend:
     def __init__(self, candidate_dir):
         from tokenizers import ByteLevelBPETokenizer
@@ -239,15 +292,38 @@ CANDIDATES = [
     # hard-reject shared by the whole SentencePiece family (see
     # hardening_pass_2026_07_19 part 2 in pins/tok0_pins.yaml). Retrained
     # the full unigram_sp/bpe_sp vocab-size grid with this fix.
-    ("unigram_sp_4000_v1_bytefallback", "unigram_sp_bytefallback", "sp"),
-    ("unigram_sp_8000_v1_bytefallback", "unigram_sp_bytefallback", "sp"),
-    ("unigram_sp_13000_v1_bytefallback", "unigram_sp_bytefallback", "sp"),
-    ("bpe_sp_4000_v1_bytefallback", "bpe_sp_bytefallback", "sp"),
-    ("bpe_sp_8000_v1_bytefallback", "bpe_sp_bytefallback", "sp"),
-    ("bpe_sp_16000_v1_bytefallback", "bpe_sp_bytefallback", "sp"),
-    ("bpe_sp_32000_v1_bytefallback", "bpe_sp_bytefallback", "sp"),
+    # kind="sp" (native SentencePieceProcessor) rows for these are kept
+    # separately below as *_native for comparison -- these primary rows now
+    # use "hfwrap" (HFWrappedSPBackend): wraps the SAME trained pieces+scores
+    # in a real tokenizers.Tokenizer with canonical non-collapsing Metaspace
+    # + ByteFallback decoding instead of native sentencepiece encode/decode.
+    # Validated 2026-07-19: 0 UNK, 0/32 round-trip failures (was 32/32 via
+    # native SPBackend even with byte_fallback=True at training time -- see
+    # hardening_pass_2026_07_19_round2).
+    # 4-tuple: (model_dir_id, algorithm, kind, eval_id). eval_id is what
+    # lands in the output row's "id" field -- needed here because the same
+    # trained model directory is evaluated twice, once per backend, and
+    # candidates.jsonl / g1_selection both need unique ids.
+    ("unigram_sp_4000_v1_bytefallback", "unigram_sp_bytefallback", "hfwrap", None),
+    ("unigram_sp_8000_v1_bytefallback", "unigram_sp_bytefallback", "hfwrap", None),
+    ("unigram_sp_13000_v1_bytefallback", "unigram_sp_bytefallback", "hfwrap", None),
+    ("bpe_sp_4000_v1_bytefallback", "bpe_sp_bytefallback", "hfwrap", None),
+    ("bpe_sp_8000_v1_bytefallback", "bpe_sp_bytefallback", "hfwrap", None),
+    ("bpe_sp_16000_v1_bytefallback", "bpe_sp_bytefallback", "hfwrap", None),
+    ("bpe_sp_32000_v1_bytefallback", "bpe_sp_bytefallback", "hfwrap", None),
     # Combined: both fixes together -- the "best of both" candidate.
-    ("bpe_sp_16000_v1_tcoreseed_bytefallback", "bpe_sp_tcoreseed_bytefallback", "sp"),
+    ("bpe_sp_16000_v1_tcoreseed_bytefallback", "bpe_sp_tcoreseed_bytefallback", "hfwrap", None),
+    # Same 8 candidates, evaluated via native SentencePieceProcessor instead
+    # of the wrapper, kept side by side to make the fix's effect measurable
+    # rather than just replacing the old rows silently.
+    ("unigram_sp_4000_v1_bytefallback", "unigram_sp_bytefallback_native", "sp", "unigram_sp_4000_v1_bytefallback_native"),
+    ("unigram_sp_8000_v1_bytefallback", "unigram_sp_bytefallback_native", "sp", "unigram_sp_8000_v1_bytefallback_native"),
+    ("unigram_sp_13000_v1_bytefallback", "unigram_sp_bytefallback_native", "sp", "unigram_sp_13000_v1_bytefallback_native"),
+    ("bpe_sp_4000_v1_bytefallback", "bpe_sp_bytefallback_native", "sp", "bpe_sp_4000_v1_bytefallback_native"),
+    ("bpe_sp_8000_v1_bytefallback", "bpe_sp_bytefallback_native", "sp", "bpe_sp_8000_v1_bytefallback_native"),
+    ("bpe_sp_16000_v1_bytefallback", "bpe_sp_bytefallback_native", "sp", "bpe_sp_16000_v1_bytefallback_native"),
+    ("bpe_sp_32000_v1_bytefallback", "bpe_sp_bytefallback_native", "sp", "bpe_sp_32000_v1_bytefallback_native"),
+    ("bpe_sp_16000_v1_tcoreseed_bytefallback", "bpe_sp_tcoreseed_bytefallback_native", "sp", "bpe_sp_16000_v1_tcoreseed_bytefallback_native"),
 ]
 
 
@@ -258,10 +334,14 @@ def main():
     args = ap.parse_args()
 
     rows = []
-    for candidate_id, algorithm, kind in CANDIDATES:
+    for entry in CANDIDATES:
+        candidate_id, algorithm, kind = entry[0], entry[1], entry[2]
+        eval_id = entry[3] if len(entry) > 3 and entry[3] else candidate_id
         cdir = TRAINING_DIR / "candidates" / candidate_id
         if kind == "sp":
             backend = SPBackend(cdir / f"{candidate_id}.model")
+        elif kind == "hfwrap":
+            backend = HFWrappedSPBackend(cdir / f"{candidate_id}.model")
         elif kind == "blbpe":
             backend = ByteLevelBPEBackend(cdir)
         elif kind == "hf":
@@ -269,7 +349,7 @@ def main():
         else:
             backend = PureByteBackend()
         tag = "branch_b" if algorithm == "pure_byte" else ("incumbent" if algorithm == "incumbent_sp" else None)
-        row = evaluate(backend, candidate_id, algorithm, tag=tag)
+        row = evaluate(backend, eval_id, algorithm, tag=tag)
         rows.append(row)
         print(json.dumps(row, indent=2))
 

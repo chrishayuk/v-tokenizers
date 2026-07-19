@@ -78,29 +78,36 @@ v-tokenizers/
   canonical, not a claim that either one is byte-safe -- see above.
   "Byte-identical to the `tokenizer.json`/`tokenizers`-library path" is
   the accurate claim; "byte-identical to SentencePiece" is not.
-- **v12**: mid-funnel, hardened twice (2026-07-19), `survivors = []` both
-  times, for increasingly precise reasons. Real 538-item T-core (from
-  `v11/config.json`, not a stub) plus an 11.4x-bigger corpus revealed the
-  first-pass "winner" was a measurement artifact of a trivially-easy
-  target set, not a real advantage -- no vanilla-trained candidate beats
-  the incumbent's deliberately-engineered vocab on real priority-concept
-  fertility. Confirmatory follow-up: seeding T-core directly into
-  SentencePiece training (matching `v11-builder`'s own real technique)
-  closes that fertility gap to exactly 1.0 -- a real, validated path for
-  a future candidate. Separately, SentencePiece's `byte_fallback` option
-  fully fixes the UNK half of the round-trip/UNK hard-reject for v12
-  candidates (0 UNK across the sample corpus) -- but round-trip itself
-  still fails, root-caused precisely to a structural SentencePiece
-  behavior (its mandatory internal metaspace step collapses runs of
-  literal spaces) that no public training-time toggle controls. This is
-  the same *class* of gap blocking v11 itself above, now understood in
-  more depth, not yet fixed in either place. Also tried, real negative
-  result: the T-core seeding technique does not transfer cleanly to
-  `byte_level_bpe` via the `tokenizers` library (tested two approaches,
-  both documented). See `v12/README.md` and
-  `v12/pins/tok0_pins.yaml` -> `hardening_pass_2026_07_19` /
-  `hardening_pass_2026_07_19_round2` for full detail, including what
-  wasn't attempted.
+- **v12**: mid-funnel, hardened three times (2026-07-19) -- and the
+  third time produced **the funnel's first real, non-exempt Gate G1
+  survivor**: `bpe_sp_16000_v1_tcoreseed_bytefallback`. Sequence: real
+  538-item T-core (from `v11/config.json`, not a stub) plus an
+  11.4x-bigger corpus first revealed the original "winner" was a
+  measurement artifact of a trivially-easy target set (`survivors = []`);
+  seeding T-core directly into SentencePiece training (matching
+  `v11-builder`'s own real technique) closed the fertility gap to
+  exactly 1.0; `byte_fallback` fixed UNK completely but round-trip still
+  failed via native SentencePiece (a structural behavior -- its
+  mandatory metaspace step collapses runs of literal spaces -- reachable
+  by no public training-time toggle); wrapping the trained vocab in a
+  real `tokenizers.Tokenizer` (explicit non-collapsing Metaspace +
+  `ByteFallback` decoder) instead of native `SentencePieceProcessor`
+  fixed round-trip completely (0/32 failures). Combining the seeding fix
+  and the wrapper fix in one candidate produced the survivor above --
+  `t_core_fertility=1.0`, `round_trip_pass=true`, `unk_count=0`. This
+  does **not** fix v11 itself: checked directly, v11's own
+  `tokenizer.json` already uses this exact canonical pretokenizer and
+  still shows 543 UNK / 32-of-32 round-trip fail -- its vocab simply has
+  no byte-fallback pieces, a different, separate, not-yet-made decision
+  (changing v11's frozen vocab, tied to already-trained model weights).
+  Also tried, real negative result: the T-core seeding technique does
+  not transfer cleanly to `byte_level_bpe` via the `tokenizers` library
+  (tested two approaches, both documented). This is a real, earned
+  screening-stage result on prototype-scale data -- not a claim it's the
+  final production tokenizer, which needs TOK-2/TOK-3 real model
+  training. See `v12/README.md` and `v12/pins/tok0_pins.yaml` ->
+  `hardening_pass_2026_07_19`, `_round2`, and
+  `wrapper_fix_and_first_real_survivor_2026_07_19` for full detail.
 - **This screen prunes candidates; it does not pick a production
   tokenizer.** Compression/fertility/round-trip are hard/threshold
   rejection criteria (TOK-1, Gate G1) -- they tell you what's obviously
