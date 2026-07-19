@@ -271,3 +271,53 @@ tok1_grid_status:
   branch_b_msi_strict_confirmation: "pure_byte_v0 measures MSI-strict = 1.0 exactly across all 116 frame_battery.jsonl instances -- empirical confirmation of design doc's pre-registered prediction P10'(b). See result branch_b_msi_strict_confirmation."
   round_trip_split: "all SentencePiece candidates (unigram_sp, bpe_sp, every size): round_trip_pass=false, unk_count=144 on v11/corpus. byte_level_bpe and pure_byte: round_trip_pass=true, unk_count=0. A real measured tradeoff, not a bug in either family."
   g1_selection_blocked_on: ["census_F_max", "census_R_max", "MSI_canonical_min"]  # see open_pins above -- g1_selection.select_survivors() is implemented+tested (bench/g1_selection.py, bench/test_g1_selection.py, 12 fixtures passing) and candidates.jsonl is real ready input; harness (tokenizer_bench.py grid-screen) correctly refuses to run with these still null
+
+hardening_pass_2026_07_19: >
+  Per Chris's instruction ("harden it") after the first G1 run: replaced the illustrative T-core
+  stub (31 rows: "the", "a", "cat", ...) with a REAL 538-item target set drawn from v11's own
+  config.json (build_t_core.py: language_extras -- 379 real per-language priority builtins/types
+  across 10 languages; infra math/greek/legal/currency symbols -- 231; acronyms -- 46; deduped by
+  text). Scaled the C8 corpus 11.4x (v0: 1.9MB/5,595 rows -> v1: 21.6MB/70,031 rows;
+  N_PROSE 1500->20000, N_MATH 4000->50000; code stays ~105KB, real v-tokenizers-scoped harvest,
+  not sampled -- disclosed: code's mixture share fell from 15.7% to 0.5% since it doesn't scale
+  with N_PROSE/N_MATH, a real characteristic of v1, not hidden). Retrained the vocab-size axis at
+  candidate_grid.yaml's real targets: bpe_sp and byte_level_bpe reach the full [4000,8000,16000,32000]
+  (bpe_sp's new SentencePiece ceiling on v1 is 33876, clears 32000); unigram_sp tops out at 13000
+  (v1 ceiling 13331 -- even an 11.4x corpus scale-up only moved the ceiling from 6923->13331, NOT
+  linear; reaching 32000 for unigram would need a corpus roughly two orders of magnitude larger
+  than v0, not practical in this pass -- disclosed, not silently worked around).
+
+  RESULT, RE-EVALUATED AGAINST THE REAL T-CORE: every trained candidate's t_core_fertility roughly
+  DOUBLED (SP-family: ~1.0 -> 2.0-2.9; byte_level_bpe: ~1.6-1.9 -> 2.4-2.9) because the stub set
+  (common English words) is trivially single-token for any subword tokenizer and was never
+  discriminating. v11_incumbent measures 1.320 on the same real set -- meaningfully better than
+  every vanilla-trained candidate, none of which clear census_F_max=2.0. Real grid-screen run:
+  **zero non-exempt survivors** (only v11_incumbent/pure_byte_v0 exempt). All unigram_sp/bpe_sp
+  (v0 and v1) hard-reject on the pre-existing round-trip/UNK gap (unrelated to T-core); all
+  byte_level_bpe threshold-reject on t_core_fertility > F_max.
+
+  CONFIRMATORY EXPERIMENT: tested why the incumbent beats vanilla-trained candidates on T-core --
+  retrained bpe_sp_16000 with T-core seeded as SentencePiece `user_defined_symbols`, matching
+  v11-builder's own real technique (src/main.rs: injects both bare AND `▁`-prefixed forms of
+  priority tokens). First attempt (bare form only) still measured t_core_fertility=2.0 exactly,
+  not ~1.0 -- diagnosed directly (`sp.encode('int') -> ['▁','int']`): SentencePiece's
+  add_dummy_prefix normalization prepends `▁` before matching, so a standalone word needs the
+  PREFIXED form registered too. Second attempt (both forms) confirmed the fix:
+  `sp.encode('int') -> ['▁int']`, t_core_fertility=1.0 exactly (id `bpe_sp_16000_v1_tcoreseed`).
+  This validates a real, replicable path for any future TOK-1 candidate to match the incumbent's
+  T-core fertility -- explicit priority-token injection, not better vanilla training -- but this
+  seeded candidate still hard-rejects on the SAME round-trip/UNK gap as every other SP-family
+  candidate (unk_count=897), confirming that gap is orthogonal to T-core fertility, not fixed by
+  this technique.
+
+  NOT attempted this pass (disclosed as real remaining gaps, not silently skipped): seeding
+  byte_level_bpe similarly (HF `tokenizers` ByteLevelBPETokenizer's own priority-injection
+  mechanism, unexplored); fixing the SentencePiece-family round-trip/UNK gap itself (same root
+  cause as the incumbent's own known vocab-coverage gap for embedded tab/newline -- would need
+  either byte-fallback or explicit whitespace-piece training, a real design decision); the
+  pre_tokenization axis (whitespace_split/digit_isolating/code_aware) from candidate_grid.yaml,
+  still entirely unimplemented; recalibrating census_R_max against real-scale category-5
+  measurements (still deliberately permissive, per the original decision log above, and v1's
+  category_5_fraction values are marginally worse than v0's since a bigger vocab against the
+  same 32-file v11/corpus eval sample exercises a smaller fraction of it -- expected, not a
+  regression, and still not a reason to tighten R_max without a bigger eval sample too).

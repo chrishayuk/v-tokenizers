@@ -17,7 +17,6 @@ import sentencepiece as spm
 
 TRAINING_DIR = Path(__file__).resolve().parent
 V12_ROOT = TRAINING_DIR.parent
-CORPUS_TXT = V12_ROOT / "corpus" / "c8_corpus_v0.txt"
 
 
 def main():
@@ -25,15 +24,23 @@ def main():
     ap.add_argument("--algorithm", choices=["unigram", "bpe"], default="unigram")
     ap.add_argument("--vocab-size", type=int, default=4000)
     ap.add_argument("--candidate-id", default=None)
+    ap.add_argument("--corpus-version", default="v1", help="which corpus/c8_corpus_<version>.txt to train on")
+    ap.add_argument("--seed-t-core", action="store_true",
+                     help="seed T-core (targets/t_core.jsonl) as SentencePiece user_defined_symbols, "
+                          "guaranteeing each is a single vocab piece -- tests whether v11's real "
+                          "fertility advantage comes from explicit priority-token injection")
     args = ap.parse_args()
+    corpus_txt = V12_ROOT / "corpus" / f"c8_corpus_{args.corpus_version}.txt"
 
-    candidate_id = args.candidate_id or f"{args.algorithm}_sp_{args.vocab_size}_v0"
+    candidate_id = args.candidate_id or f"{args.algorithm}_sp_{args.vocab_size}_{args.corpus_version}"
+    if args.seed_t_core:
+        candidate_id += "_tcoreseed"
     out_dir = TRAINING_DIR / "candidates" / candidate_id
     out_dir.mkdir(parents=True, exist_ok=True)
     model_prefix = str(out_dir / candidate_id)
 
-    spm.SentencePieceTrainer.train(
-        input=str(CORPUS_TXT),
+    train_kwargs = dict(
+        input=str(corpus_txt),
         model_prefix=model_prefix,
         vocab_size=args.vocab_size,
         model_type=args.algorithm,
@@ -45,6 +52,21 @@ def main():
         shuffle_input_sentence=True,
         seed_sentencepiece_size=1000000,
     )
+    if args.seed_t_core:
+        # Seed BOTH the bare and metaspace-prefixed ("▁tok") forms --
+        # matching v11-builder's own real technique (src/main.rs:
+        # `format!("\u{2581}{tok}")`) for injecting priority tokens.
+        # First attempt seeded only the bare form and measured
+        # t_core_fertility=2.0 exactly, not ~1.0: SentencePiece's
+        # add_dummy_prefix normalization prepends "▁" before matching, so
+        # encoding a standalone word emits ['▁', 'tok'] (2 tokens) unless
+        # the prefixed form is ALSO a registered piece.
+        t_core_path = V12_ROOT / "targets" / "t_core.jsonl"
+        bare = sorted({json.loads(l)["text"] for l in t_core_path.read_text().splitlines() if l.strip()})
+        symbols = sorted(set(bare) | {f"▁{s}" for s in bare})
+        train_kwargs["user_defined_symbols"] = symbols
+
+    spm.SentencePieceTrainer.train(**train_kwargs)
 
     sp = spm.SentencePieceProcessor(model_file=model_prefix + ".model")
     pieces = [{"id": i, "text": sp.id_to_piece(i), "score": sp.get_score(i)} for i in range(sp.vocab_size())]

@@ -27,15 +27,21 @@ REPO_ROOT = V12_ROOT.parent
 
 HUB_SHA = "f54c09fd23315a6f9c86f9dc80f725de7d8f9c64"  # same pinned revision as C2 eval stream
 SEED = 20260719
-N_PROSE = 1500
-N_MATH = 4000
+# v1 (2026-07-19): scaled up from v0's N_PROSE=1500/N_MATH=4000 (1.9MB
+# total) specifically to clear SentencePiece's corpus-size-driven vocab
+# ceiling at candidate_grid.yaml's real top vocab size (32000) -- v0
+# capped out at 6923 (unigram) / 20743 (bpe). code stays whatever
+# build_code_corpus.py produces (not scaled by N -- it's real source
+# harvest, not sampled).
+N_PROSE = 20000
+N_MATH = 50000
 
 CN_DATASETS = Path("/Users/christopherhay/chris-source/cell80/experiments/cell-native-architectures/artifacts/datasets")
 MATH_FILES = ["cn7_corpus_train.jsonl", "cn8_corpus_b.jsonl", "cn8_corpus_atok.jsonl", "cn8_corpus_aex.jsonl"]
 
-OUT_JSONL = CORPUS_DIR / "c8_corpus_v0.jsonl"
-OUT_TXT = CORPUS_DIR / "c8_corpus_v0.txt"
-OUT_MANIFEST = CORPUS_DIR / "c8_manifest.json"
+OUT_JSONL = CORPUS_DIR / "c8_corpus_v1.jsonl"
+OUT_TXT = CORPUS_DIR / "c8_corpus_v1.txt"
+OUT_MANIFEST = CORPUS_DIR / "c8_manifest_v1.json"
 
 
 def sample_prose(n, seed):

@@ -200,6 +200,9 @@ def evaluate(backend, candidate_id, algorithm, tag=None):
 
 CANDIDATES = [
     ("v11_incumbent", "incumbent_sp", "hf"),
+    # v0: prototype-scale corpus (1.9MB), stub T-core. Kept for historical
+    # comparison against v1 -- not re-run, still valid records of what they
+    # were at the time.
     ("unigram_sp_4000_v0", "unigram_sp", "sp"),
     ("unigram_sp_6900_v0", "unigram_sp", "sp"),
     ("bpe_sp_4000_v0", "bpe_sp", "sp"),
@@ -209,6 +212,29 @@ CANDIDATES = [
     ("byte_level_bpe_4000_v0", "byte_level_bpe", "blbpe"),
     ("byte_level_bpe_8000_v0", "byte_level_bpe", "blbpe"),
     ("pure_byte_v0", "pure_byte", "pure_byte"),
+    # v1 (2026-07-19 hardening pass): 21.6MB corpus (11.4x v0), real T-core
+    # (538 rows from v11/config.json, not a stub). unigram_sp tops out at
+    # 13000 (SentencePiece's own vocab-size ceiling on this corpus, 13331);
+    # bpe_sp and byte_level_bpe reach the full candidate_grid.yaml target of
+    # 32000.
+    ("unigram_sp_4000_v1", "unigram_sp", "sp"),
+    ("unigram_sp_8000_v1", "unigram_sp", "sp"),
+    ("unigram_sp_13000_v1", "unigram_sp", "sp"),
+    ("bpe_sp_4000_v1", "bpe_sp", "sp"),
+    ("bpe_sp_8000_v1", "bpe_sp", "sp"),
+    ("bpe_sp_16000_v1", "bpe_sp", "sp"),
+    ("bpe_sp_32000_v1", "bpe_sp", "sp"),
+    ("byte_level_bpe_4000_v1", "byte_level_bpe", "blbpe"),
+    ("byte_level_bpe_8000_v1", "byte_level_bpe", "blbpe"),
+    ("byte_level_bpe_16000_v1", "byte_level_bpe", "blbpe"),
+    ("byte_level_bpe_32000_v1", "byte_level_bpe", "blbpe"),
+    # Confirmatory experiment, not a normal grid entry: T-core seeded as
+    # SentencePiece user_defined_symbols (guaranteeing each T-core item is
+    # its own vocab piece) -- tests whether the incumbent's real fertility
+    # advantage over vanilla-trained candidates comes specifically from
+    # explicit priority-token injection (which is literally how v11-builder
+    # constructs v11's own vocab from config.json). See evaluate.
+    ("bpe_sp_16000_v1_tcoreseed", "bpe_sp_tcoreseed", "sp"),
 ]
 
 

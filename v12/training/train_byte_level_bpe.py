@@ -15,21 +15,22 @@ from tokenizers import ByteLevelBPETokenizer
 
 TRAINING_DIR = Path(__file__).resolve().parent
 V12_ROOT = TRAINING_DIR.parent
-CORPUS_TXT = V12_ROOT / "corpus" / "c8_corpus_v0.txt"
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--vocab-size", type=int, default=4000)
+    ap.add_argument("--corpus-version", default="v1", help="which corpus/c8_corpus_<version>.txt to train on")
     args = ap.parse_args()
+    corpus_txt = V12_ROOT / "corpus" / f"c8_corpus_{args.corpus_version}.txt"
 
-    candidate_id = f"byte_level_bpe_{args.vocab_size}_v0"
+    candidate_id = f"byte_level_bpe_{args.vocab_size}_{args.corpus_version}"
     out_dir = TRAINING_DIR / "candidates" / candidate_id
     out_dir.mkdir(parents=True, exist_ok=True)
 
     tok = ByteLevelBPETokenizer()
     tok.train(
-        files=[str(CORPUS_TXT)],
+        files=[str(corpus_txt)],
         vocab_size=args.vocab_size,
         special_tokens=["<pad>", "<unk>", "<s>", "</s>"],
     )

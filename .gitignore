@@ -26,9 +26,10 @@ build/
 
 # v12: generated corpora / trained candidates / eval output — tracked as
 # real artifacts in the chuk-experiments server instead, not in git
-# history. Scripts, pins, manifests, and README stay tracked.
-v12/corpus/c8_corpus_v0.jsonl
-v12/corpus/c8_corpus_v0.txt
+# history. Scripts, pins, manifests, and README stay tracked. Glob
+# covers every corpus generation (v0, v1, ...), not just the first.
+v12/corpus/c8_corpus_v*.jsonl
+v12/corpus/c8_corpus_v*.txt
 v12/corpus/c8_code_corpus.jsonl
 v12/training/candidates/
 v12/training/candidates.jsonl

@@ -197,19 +197,33 @@ Worth doing once a v12 candidate wins the funnel and gets a Rust port.
   now set — full independently-motivated reasoning, plus the honest
   caveat that this was decided *after* the candidate grid already
   existed (not blind pre-registration), in `pins/tok0_pins.yaml` →
-  `g1_threshold_decision_log_2026_07_19`. Running `bench/tokenizer_bench.py
-  grid-screen` for real now gives **`survivors = [byte_level_bpe_8000_v0]`**
-  — `v11_incumbent`/`pure_byte_v0` exempt, all 6 `unigram_sp`/`bpe_sp`
-  candidates hard-rejected on the already-known round-trip/UNK finding
-  (unaffected by the threshold choice), `byte_level_bpe_8000_v0`
-  Pareto-dominating `byte_level_bpe_4000_v0` outright. This is the
-  correct, honest output of the algorithm on today's prototype-scale
-  data — not a claim that it's the final TOK-1 winner once C8 reaches
-  real scale.
-- Everything under `targets/` is seed content, not the frozen C8-derived
-  sets — `t_core` in particular is illustrative only. (The G1 result
-  above is downstream of this seed data too — a real screening result,
-  not yet a final one.)
+  `g1_threshold_decision_log_2026_07_19`. First run gave
+  `survivors = [byte_level_bpe_8000_v0]` — but that was against a stub
+  T-core and a 1.9MB prototype corpus. See the hardening pass below: it
+  doesn't hold up.
+- **Hardened, same day: real T-core, 11x bigger corpus, zero survivors —
+  and here's exactly why.** Replaced the 31-row stub T-core with 538
+  real items from `v11/config.json` (`targets/build_t_core.py`:
+  language keywords, math/greek symbols, technical acronyms — the same
+  data v11's own vocab injects for guaranteed single-token coverage).
+  Scaled C8 11.4x (1.9MB → 21.6MB) and retrained the grid at
+  `candidate_grid.yaml`'s real vocab sizes (bpe_sp/byte_level_bpe reach
+  the full [4000,8000,16000,32000]; unigram_sp tops out at 13000 —
+  its SentencePiece ceiling only moved from 6923 to 13331 despite the
+  11.4x corpus increase, a real non-linear-scaling finding). Re-running
+  `grid-screen`: **`survivors = []`.** Every candidate's real T-core
+  fertility roughly doubled once measured against genuine priority
+  concepts instead of trivial common words — `v11_incumbent` scores
+  1.320, no vanilla-trained candidate clears `F_max=2.0`. The original
+  survivor was a measurement artifact of an easy target set, not a real
+  advantage — hardening caught it before any GPU compute got spent on
+  it. Confirmatory follow-up: seeding T-core into SentencePiece training
+  as `user_defined_symbols` (both bare and `▁`-prefixed forms, matching
+  `v11-builder`'s own real technique) closes the fertility gap exactly
+  (1.0), proving a real, replicable path for a future candidate to
+  compete — though it still hits the same round-trip/UNK gap as every
+  other SentencePiece candidate, a separate, still-open problem. Full
+  detail: `pins/tok0_pins.yaml` → `hardening_pass_2026_07_19`.
 - `pins/tok0_pins.yaml` — commitments C0–C10 are filled in from the
   design doc; most numeric bands (δ_switch, Δ, ε_match, census_N, teg_*,
   mini_ladder_sizes, tok4_candidate_cap) remain explicit
@@ -218,10 +232,16 @@ Worth doing once a v12 candidate wins the funnel and gets a Rust port.
 
 ## Not done here (needs compute / corpus / a human decision)
 
-Gate G1 has run for real (`survivors = [byte_level_bpe_8000_v0]`, see
-above) — but only on the prototype-scale v0 C8 corpus with stub T-core
-targets and a tiny-sample category-5 proxy. Re-running it once C8 is at
-real frozen scale, T-core is the real frozen target set, and
+Gate G1 has run for real, twice — first at prototype scale
+(`survivors = [byte_level_bpe_8000_v0]`), then hardened
+(`survivors = []`, see above). The path to an actual survivor is now
+understood (priority-token seeding closes the T-core gap) but not
+finished: no candidate combines T-core seeding with a fix for the
+round-trip/UNK gap, and byte_level_bpe hasn't been tried with an
+equivalent seeding technique. Re-running once C8 is at real frozen scale
+(21.6MB is still far from a frozen C8), T-core is the doc's own frozen
+set (538 real items is a real improvement, not the frozen commitment),
+and
 `census_R_max` is recalibrated against real-scale category-5 measurements
 (today's 0.95 is deliberately permissive/near-no-op, not a considered bar
 — see the decision log) is real remaining work, not done here. TOK-2a/b/c through TOK-4 model

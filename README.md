@@ -58,13 +58,16 @@ v-tokenizers/
   not an open question. "Byte-identical to the `tokenizer.json`/
   `tokenizers`-library path" is the accurate claim; "byte-identical to
   SentencePiece" is not, and shouldn't be claimed when publishing.
-- **v12**: mid-funnel. 9 real trained candidates + the v11 incumbent
-  evaluated; Gate G1's three threshold pins are decided (2026-07-19, see
-  `g1_threshold_decision_log_2026_07_19` -- decided post-hoc, after the
-  candidate grid already existed, disclosed as such) and the first real
-  selection has run: `survivors = [byte_level_bpe_8000_v0]`. A genuine
-  screening-stage result on prototype-scale data, not a final winner. See
-  `v12/README.md`.
+- **v12**: mid-funnel, hardened once (2026-07-19). First real Gate G1 run
+  (prototype-scale C8, stub T-core) gave `survivors = [byte_level_bpe_8000_v0]`.
+  Hardening (real 538-item T-core from v11/config.json, C8 scaled 11.4x,
+  grid retrained at real vocab sizes) changed the result to
+  `survivors = []` -- the original survivor was a measurement artifact of
+  an easy target set, not a real advantage. A confirmatory experiment
+  (seeding T-core into training, matching v11-builder's own technique)
+  proved a real path to close the gap exists, but no candidate combines
+  it with a fix for the pre-existing round-trip/UNK gap yet. See
+  `v12/README.md` and `v12/pins/tok0_pins.yaml` -> `hardening_pass_2026_07_19`.
 - **Coverage**: no per-file threshold enforced in CI yet.
   `v11-cli`/`v11-builder`/`v11-bench` have ~0 dedicated unit tests today
   (their logic is currently exercised indirectly via the bench harness's
