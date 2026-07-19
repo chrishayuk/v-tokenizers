@@ -514,27 +514,63 @@ v11_pinned_replication_and_tok2_held_out_reversal_2026_07_20: >
   phase1-only. v11's own two runs (original vs. pinned replication) share identical training
   loss (2.1660 vs 2.1710, 0.23% apart) and identical tokenizer/compression (0.29092 tok/byte,
   confirmed via held_out_compression matching exactly between the two v11 rows) yet differ by
-  13.3% on held-out BPB -- the gap is real model-quality variance from which exact documents
-  each run's seed=42 stream happened to draw (hub revision differs: unverified April run vs.
-  pinned July hub_sha), not a tokenizer or measurement artifact. Sanity-checked using the same
-  audit Chris requested on the previous (later-defended) result: held_out_compression is
-  computed per-checkpoint from that checkpoint's own real tok.encode() output and matches each
-  candidate's independently-measured intrinsic compression within 0.4-2.3% -- no cross-candidate
-  token-count contamination found.
+  13.3% on held-out BPB. Sanity-checked using the same audit Chris requested on the previous
+  (later-defended) result: held_out_compression is computed per-checkpoint from that
+  checkpoint's own real tok.encode() output and matches each candidate's independently-measured
+  intrinsic compression within 0.4-2.3% -- no cross-candidate token-count contamination found.
 
-  CAVEATS, disclosed not hidden: (1) single run each side, no repeated-seed variance estimate --
-  the 13.3% gap between two nominally-identical-methodology v11 runs is itself evidence of
-  real run-to-run noise at this scale, so this result is directionally strong but not a
-  zero-uncertainty final answer; ideally wants multiple seeds before being treated as settled.
-  (2) phase1-only for every row here (matches what's being compared -- v11's original
-  model_full.pt vs. v12 candidates' equivalent checkpoints) -- NOT yet a comparison against
-  v11's true best "compiled"/frozen-FFN checkpoint, which needs phase3 to actually run.
-  (3) TinyStories-only evaluation, same as every prior TOK-2 result in this funnel --
-  broader-domain (code/math/JSON/multilingual) evaluation is still future work.
+  CORRECTION 2026-07-20 (Chris's review): the 13.3% original-vs-replication gap was initially
+  attributed here to "real model-quality variance ... not a tokenizer or measurement artifact."
+  That framing overreached and is withdrawn. The two runs don't hold enough constant to license
+  a "variance" claim: the original run's exact training documents can't be reconstructed
+  (unpinned revision), its held-out cleanliness was never independently verified (only
+  assumed), and near-identical cumulative TRAINING loss doesn't establish the two runs reached
+  equivalent solutions (that metric is already shown elsewhere in this funnel to be a poor
+  proxy for final-checkpoint quality). CORRECTED STATEMENT: the original v11 checkpoint is not
+  reproducible under the pinned harness; the cause of the 13.3% gap is UNRESOLVED, not
+  attributed to seed variance. Establishing that needs several runs under the identical frozen
+  documents/order/code/eval-manifest, varying only the seed -- not yet done.
+
+  ROBUSTNESS CHECK on the finding that DID survive (v11 replication beats unigram_16000 by
+  3.1%, 0.6846 vs 0.7058): per Chris's suggestion, bootstrapped per-STORY held-out losses
+  (batch=1, natural length, not the chunked/concatenated aggregate method) to check whether
+  this gap is a robust per-document effect or driven by a small subset. Result (1230/2000
+  stories comparable under both tokenizers): v11 has lower BPB on 61.3% of stories (754/1230),
+  mean per-story gap +0.024 (consistent with the aggregate 0.021), 10,000-resample paired
+  bootstrap 90% CI [+0.020, +0.027] -- entirely positive, not driven by a handful of documents.
+  This shows the gap is robust ACROSS THE HELD-OUT SET for this specific pair of checkpoints --
+  it does NOT show the gap would replicate under a different training seed (a separate question
+  the per-document bootstrap can't answer). Script: tiny-model/model/v11-train/
+  bootstrap_held_out_gap.py.
+
+  REFRAMING: the honest current headline is a Pareto tradeoff, not a simple v12 loss. v11
+  (0.6846 BPB, 115M params, ~32% embedding tax) currently leads quality; unigram_16000 (0.7058
+  BPB, ~87M params, ~9% embedding tax) is 3.1% behind but with a dramatically smaller footprint,
+  and beats bpe_16000 by 5.4% at matched vocab (a clean, uncontested algorithm finding), with
+  U16 vs U18 differing by only 0.06% (the vocab-plateau prediction held almost exactly). The
+  real open question is no longer "did v12 beat v11" but whether v11's ~28M extra
+  vocabulary-parameter budget is well spent versus reinvesting that budget elsewhere in the
+  trunk -- a fixed-total-parameter question, not a fixed-vocabulary one.
+
+  CAVEATS, disclosed not hidden: (1) single run each side -- see correction above, do not read
+  the original-vs-replication gap as characterized/bounded variance. (2) phase1-only for every
+  row here (matches what's being compared -- v11's original model_full.pt vs. v12 candidates'
+  equivalent checkpoints) -- NOT yet a comparison against v11's true best "compiled"/frozen-FFN
+  checkpoint, which needs phase3 to actually run. (3) TinyStories-only evaluation, same as
+  every prior TOK-2 result in this funnel -- broader-domain (code/math/JSON/multilingual)
+  evaluation is still future work.
 
   IMPLICATION: the funnel's provisional TOK-2 story ("v12's screening survivors beat the
   incumbent") does not currently hold once the incumbent side of the comparison is held to the
   same verification standard as the challengers -- exactly the failure mode Chris's critique
   was aimed at catching. TOK-2 should not be considered decided in either direction until
   phase3 is rerun for the replication and, ideally, more than one seed is run per side.
+
+  PROPOSED NEXT EXPERIMENTS (not started, need a priority/compute decision): (1) multi-seed
+  phase1 panel -- 3x v11 + 3x unigram_16000, identical frozen documents/order, varying only
+  init+stochasticity, to actually measure seed-to-seed noise. (2) fixed-total-parameter U16 --
+  reinvest v11's ~28M vocabulary-parameter advantage into U16's trunk (width/depth/FFN, needs a
+  concrete design choice) to hold total params near v11's 115M, directly testing whether v11's
+  advantage is about the constructed vocabulary specifically or just about having more
+  parameters somewhere.
   RUN-20260718-224841-00387.

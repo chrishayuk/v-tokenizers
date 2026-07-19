@@ -1,0 +1,18 @@
+{
+  "a_name": "v11_pinned_replication_full",
+  "b_name": "unigram_sp_16000_v2_tcoreseed_bytefallback",
+  "n_held_out_stories": 2000,
+  "n_paired_stories": 1230,
+  "mean_bpb_a": 0.6373533818807283,
+  "mean_bpb_b": 0.6612735207045648,
+  "mean_diff_b_minus_a": 0.023920138823836513,
+  "per_story_a_wins": 754,
+  "per_story_b_wins": 476,
+  "per_story_ties": 0,
+  "bootstrap_n": 10000,
+  "bootstrap_ci_level": 0.9,
+  "bootstrap_ci_low": 0.02042620092936804,
+  "bootstrap_ci_high": 0.027444272278912,
+  "bootstrap_fraction_diff_gt_zero": 1.0,
+  "note": "per-story (not per-chunk) evaluation, batch=1, natural story length capped at MAX_SEQ; stories requiring >MAX_SEQ tokens under either tokenizer dropped from BOTH models to keep the paired comparison apples-to-apples. Complementary to eval_held_out.py's chunk-level aggregate, not a replacement for it -- answers whether the aggregate gap is a robust per-document effect or driven by a small subset, not whether it would replicate under a different training seed."
+}

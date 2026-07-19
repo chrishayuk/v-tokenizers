@@ -310,7 +310,8 @@ Worth doing once a v12 candidate wins the funnel and gets a Rust port.
   reading `candidates.jsonl` directly today, not just trusting the
   survivor list. Full detail: `pins/tok0_pins.yaml` →
   `vocab_sizing_experiment_2026_07_19`.
-- **TOK-2 real model training: first result reverses on verification.**
+- **TOK-2 real model training: first result reverses on verification —
+  and reframes as a Pareto tradeoff, not a simple loss.**
   Actual TinyModel training (sibling `tiny-model` repo,
   `model/v11-train/train_tok2.py`, byte-matched budgets) on both TOK-1
   survivors + the v11 incumbent initially showed both v12 candidates
@@ -321,10 +322,24 @@ Worth doing once a v12 candidate wins the funnel and gets a Rust port.
   (`train_v11_replication.py`) with hash-verified held-out disjointness
   reverses it: the verified-clean v11 replication scores
   `held_out_bpb=0.6846`, beating both `bpe_sp_16000` (0.7461, 9.0%
-  worse) and `unigram_sp_18000` (0.7062, 3.2% worse). Phase3
-  (frozen-FFN retrain) intentionally deferred — this is a phase1-only
-  comparison, single run per side, TinyStories-only. **TOK-2 is not
-  decided in either direction.** Full detail: `pins/tok0_pins.yaml` →
+  worse) and `unigram_sp_18000`/`unigram_sp_16000` (~0.706, ~3.1%
+  worse). Phase3 (frozen-FFN retrain) intentionally deferred — this is
+  a phase1-only comparison, single run per side, TinyStories-only.
+  **The 13.3% gap between v11's original and replicated checkpoints is
+  NOT characterized as "seed variance"** — that overstated an early
+  draft's evidence; correctly stated, the original checkpoint simply
+  isn't reproducible under the pinned harness, and the cause of the gap
+  is unresolved. What IS checked: a per-story bootstrap shows the
+  surviving 3.1% v11-vs-`unigram_16000` gap is a robust effect across
+  61.3% of held-out documents (90% CI entirely positive), not a
+  small-subset artifact — though that says nothing about whether it
+  would hold under a different training seed. At matched 16K vocab,
+  Unigram beats BPE by 5.4%, and U16 vs U18 differ by only 0.06% (the
+  vocab-plateau prediction held almost exactly). **TOK-2 is not decided
+  in either direction** — the live question is whether v11's ~28M extra
+  vocabulary-parameter budget is well spent, or would do more good
+  reinvested in the trunk (a fixed-total-parameter experiment, proposed
+  but not started). Full detail: `pins/tok0_pins.yaml` →
   `v11_pinned_replication_and_tok2_held_out_reversal_2026_07_20`.
 - `pins/tok0_pins.yaml` — commitments C0–C10 are filled in from the
   design doc; most numeric bands (δ_switch, Δ, ε_match, census_N, teg_*,
