@@ -30,11 +30,13 @@ candidate clears the incumbent survivor on held-out BPB at matched byte/FLOP bud
 The source proposal says: *"U18 is currently the strongest measured starting point, at
 0.7427 held-out BPB versus 0.7932 for B16 and 0.8059 for v11."* Those three numbers are
 real, but they're the **pre-contamination-fix** TOK-2b numbers (`fb3bbd8` fixed a real
-held-out-eval contamination bug the same day). The verified-clean numbers are:
+held-out-eval contamination bug the same day). The contamination-fixed numbers, as of the
+first pass (`v12/training/tok2_runs/held_out_eval_verified_clean.json`, before §2's further
+correction below), were:
 
-| candidate | held-out BPB (contamination-fixed) |
+| candidate | held-out BPB (contamination-fixed, superseded by §2) |
 |---|---|
-| v11 (incumbent) | 0.7887 |
+| v11 (original, unverified) | 0.7887 |
 | bpe_sp_16000 | 0.7426 |
 | unigram_sp_18000 | 0.7047 |
 | unigram_sp_16000 | 0.7044 |
@@ -50,27 +52,53 @@ Two things follow, neither of which the source proposal had:
   clean (see the source text's own "keep most of the tokenizer architecture fixed... for
   causal interpretation" reasoning).
 
-**Pin: ancestor = `unigram_sp_16000_v2_tcoreseed_bytefallback`** (U16), not U18. It's at
-least as strong on the decision metric, it fits the vocabulary ceiling exactly, and it's
-already the candidate `v12-tokenizer` most recently trained and held-out-evaluated (least
-stale artifact).
+**Pin: ancestor = `unigram_sp_16000_v2_tcoreseed_bytefallback`** (U16), not U18. Among the
+≤16,384-vocab candidates it's at least as strong on the decision metric and it's the
+candidate `v12-tokenizer` most recently trained and held-out-evaluated. **This pin survives
+§2's correction below** — U16 is still the strongest *compact* (≤16,384) candidate measured
+so far — but §2 changes what "strongest" means in absolute terms, because the true best
+measured tokenizer overall is no longer a ≤16K-vocab candidate at all.
 
-## 2. Correction #2 — v11's own contamination status, and why it's not blocking
+## 2. Correction #2 (superseding §1's table) — v11's real number reverses the whole comparison
 
-The source proposal's baseline table uses v11=0.7887 (now current), but flags a standing
-gap this repo already knew about: v11's original training never pinned a HF hub revision,
-so its own training-consumed document set couldn't be reconstructed to check for held-out
-overlap. A pinned-revision replication (`train_v11_replication.py`) was started for exactly
-this reason — phase1 finished 2026-07-19 (`model/v11/artifacts_pinned_replication/`,
-loss_full=2.1710, 0.23% from the original unpinned run), phase3 intentionally deferred, and
-**the held-out BPB for this pinned-replication checkpoint has not actually been computed
-yet** (`eval_held_out.py` hasn't been re-run against it — the training_results.json note
-promising a `v11_pinned_replication_full` entry is aspirational, not yet real). This
-matters for EVO-TOK's own baseline table (§6) but does not block starting: the ancestor and
-survivors under test are U16/U18/B16, not v11, and v11 only appears as a comparison
-baseline. Treat "v11's contamination-verified held-out BPB" as an open input to backfill
-into the baseline table before EVO-TOK's Level 4 (full training) stage reports a final
-verdict, not before Level 0-1 screening starts.
+§1 flagged that v11's original training never pinned a HF hub revision, so its held-out
+cleanliness was assumed, not verified, unlike the pinned v12 candidates. That gap has since
+been closed: a pinned-revision replication (`train_v11_replication.py`,
+`model/v11/artifacts_pinned_replication/`) finished phase1 and was hash-checked against the
+same verified-clean held-out set the TOK-1 survivors use. **v-tokenizers commit
+`7d3691e` (2026-07-20, landed after this doc's first draft): the result reverses TOK-2's
+"v12 beats v11" conclusion.**
+
+| candidate | held-out BPB (current, verified-clean) |
+|---|---|
+| **v11, pinned-revision replication (phase1 only)** | **0.6846** |
+| v11, original checkpoint (cleanliness unverified) | 0.7900 |
+| unigram_sp_16000 (U16, this programme's ancestor) | 0.7058 |
+| unigram_sp_18000 (U18) | 0.7062 |
+| bpe_sp_16000 | 0.7461 |
+
+The verified-clean v11 replication beats every ≤16,384-vocab candidate by a real margin
+(≈3.0-3.2% BPB vs. U16/U18, ≈8.9% vs. bpe_16000) — not a small effect. Per the v-tokenizers
+commit message: *"TOK-2 is not decided in either direction"* (phase3/frozen-FFN retrain for
+v11 intentionally not yet run; single run per side; TinyStories-only).
+
+**What this changes for EVO-TOK:** the ancestor pin (§1: U16) still stands — it remains the
+strongest *compact* candidate, and this programme's whole reason for existing is the
+embedding-tax/deployment-cost argument (`v12-tokenizer`'s own TEG_FLOPs framing,
+embedding tax ≈9-11% for U16/U18 vs. ≈32% for v11's 71,261-token vocab), not "compact
+beats big on raw BPB." But it means:
+- **§6's baseline table must include `v11_pinned_replication_full` = 0.6846** as the honest
+  top-of-field number, even though it's a different vocab-budget class (71K vs ≤16K) — an
+  EVO-TOK win over U16 is not the same claim as "beats the best tokenizer measured so far,"
+  and no writeup from this programme should imply otherwise.
+- **The success criterion in §8 stays about beating U16**, deliberately: closing a 3%
+  compact-vs-full-vocab gap through evolution, even without fully closing it, would already
+  be a real result given the embedding-tax trade being made. But any final verdict has to
+  report the v11-replication number alongside it, not omit it because it's inconvenient for
+  the "v12 already won" framing this doc's first draft assumed.
+- v11's phase1-only, single-seed status (§2) and TOK-2's own "not decided" status are both
+  open — a future EVO-TOK writeup should check `v12-tokenizer`'s TOK-2 state again rather
+  than trusting this section as still-current if much time has passed.
 
 ## 3. Scope, fixed now, not after seeing what's hard
 
@@ -172,11 +200,15 @@ niched population isn't thrown away by only ever recording one collapsed number.
 ## 6. Baselines
 
 Required, not optional, before any evolved candidate is claimed better than anything:
-- `unigram_sp_16000_v2_tcoreseed_bytefallback` (ancestor, §1)
-- `unigram_sp_18000_v2_tcoreseed_bytefallback`
-- `bpe_sp_16000_v1_tcoreseed_bytefallback`
-- v11 incumbent — contamination-verified number once available (§2), pre-fix 0.7887 used as
-  an interim, explicitly-labelled-interim number until then
+- `unigram_sp_16000_v2_tcoreseed_bytefallback` (ancestor, §1) — 0.7058 held-out BPB
+- `unigram_sp_18000_v2_tcoreseed_bytefallback` — 0.7062
+- `bpe_sp_16000_v1_tcoreseed_bytefallback` — 0.7461
+- **`v11_pinned_replication_full`** — 0.6846, the current field-best number overall (§2);
+  not itself something EVO-TOK's ≤16,384-vocab candidates are expected to beat on raw BPB,
+  but required in every results table so a compact win is never reported without the
+  full-vocab number sitting next to it
+- v11 original (cleanliness-unverified) checkpoint — 0.7900, kept only as the historical
+  number the earlier TOK-2b writeup used, not a decision-quality baseline
 - **Random token-swap negative control** — same mutation *mechanism*, no fitness selection
   (accept every mutant regardless of score). This is the actual falsification lever: if
   randomly-swapped vocabularies do about as well as selected ones, the fitness signal isn't
