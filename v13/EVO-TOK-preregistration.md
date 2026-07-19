@@ -59,6 +59,8 @@ candidate `v12-tokenizer` most recently trained and held-out-evaluated. **This p
 so far — but §2 changes what "strongest" means in absolute terms, because the true best
 measured tokenizer overall is no longer a ≤16K-vocab candidate at all.
 
+**Confirmed by Chris, 2026-07-20: ancestor = U16.** No longer a proposed pin — decided.
+
 ## 2. Correction #2 (superseding §1's table) — v11's real number reverses the whole comparison
 
 §1 flagged that v11's original training never pinned a HF hub revision, so its held-out
@@ -303,9 +305,10 @@ without that being a visible deviation.
 
 ## 10. Next step
 
-Nothing runs until: (a) the ancestor pin (§1: U16, not U18) and the single-population-only
-scope (§3) are confirmed rather than assumed from this doc alone, (b) the §8 success bar is
-set or the framing rejected, and (c) the four unbuilt Level 0-4 pieces in §4 exist. Filed as
-three `draft`-status experiments in chuk-experiments' new `v13-tokenizer-evolution`
-programme, `depends_on_experiment` chained to `v12-tokenizer`'s `tok-1-intrinsic-screen` /
+**(a) Ancestor pin (§1: U16) is confirmed** (Chris, 2026-07-20). Still open before anything
+runs: the single-population-only scope (§3) needs the same explicit confirmation rather
+than being assumed from this doc alone; (b) the §8 success bar needs to be set or the
+framing rejected; (c) the four unbuilt Level 0-4 pieces in §4 need building. Filed as three
+experiments in chuk-experiments' new `v13-tokenizer-evolution` programme,
+`depends_on_experiment` chained to `v12-tokenizer`'s `tok-1-intrinsic-screen` /
 `tok-2b-fixed-trunk` for the ancestor pool and baseline numbers.
