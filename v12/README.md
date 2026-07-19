@@ -1,19 +1,29 @@
-# v12 Tokenizer — TOK-0/TOK-1 Harness + First Real Candidate
+# v12 Tokenizer — TOK-0/TOK-1 Harness + First Real Candidates
 
 Implements the TOK-0 deliverables from `v12-tokenizer-design-funnel.md`
-(DRAFT v0.5): the harness, the pin file, target-set stubs, the candidate
+(DRAFT v0.5): the harness, the pin file, target sets, the candidate
 grid, and the dormant-block map schema — plus, as of 2026-07-19, a real
-(prototype-scale) C8 corpus and the first genuinely-trained TOK-1
-candidate tokenizer.
+(prototype-scale, hardened once) C8 corpus and genuinely-trained TOK-1
+candidates.
+
+**What's actually been run vs. what's designed**: `candidate_grid.yaml`
+specifies a 4-algorithm × 4-vocab-size × 3-pre_tokenization grid (48
+subword configs) plus the pure-byte branch. What exists today is an
+**algorithm × vocab-size pilot with a byte baseline** — the
+`pre_tokenization` axis (`whitespace_split`/`digit_isolating`/
+`code_aware`) is entirely unimplemented; every candidate trained so far
+uses one implicit pretokenization. Real progress, not the full design.
 
 Tracked in the `chuk-experiments` server under programme `v12-tokenizer`,
 experiments `tok-0-harness-pinning` through `tok-5-freeze`.
 
 Lives in the standalone `v-tokenizers` repo (moved 2026-07-19 from
-`tiny-model/tokenizer/v12/`, fresh git history) alongside the stable,
-publishable `v11/` tokenizer. v12 is NOT published — it's an active,
-pre-registered research funnel and stays private to this repo until a
-candidate wins Gate G1/G2/G3 and is promoted.
+`tiny-model/tokenizer/v12/`, fresh git history) alongside `v11/` — see
+the repo-root README's Status section before assuming v11 is
+production-ready; it currently is not (not byte-safe). v12 is NOT
+published — it's an active, pre-registered research funnel and stays
+private to this repo until a candidate wins Gate G1/G2/G3 and is
+promoted.
 
 ## Layout
 
@@ -210,7 +220,15 @@ Worth doing once a v12 candidate wins the funnel and gets a Rust port.
   `candidate_grid.yaml`'s real vocab sizes (bpe_sp/byte_level_bpe reach
   the full [4000,8000,16000,32000]; unigram_sp tops out at 13000 —
   its SentencePiece ceiling only moved from 6923 to 13331 despite the
-  11.4x corpus increase, a real non-linear-scaling finding). Re-running
+  11.4x corpus increase, a real non-linear-scaling finding). **Real
+  caveat, not hidden**: scaling only bumped `N_PROSE`/`N_MATH` — code
+  didn't scale with them (it's a fixed real-source harvest), so code's
+  share of the mixture fell from 15.7% to 0.5%. Any conclusion about
+  code-aware behavior from this corpus is unreliable until domain
+  proportions are frozen **by bytes** at every scale (prose/code/math
+  at minimum; JSON/tool-call/multilingual/noisy text would be a further
+  improvement) instead of letting one domain passively shrink — not
+  done yet, a real next step. Re-running
   `grid-screen`: **`survivors = []`.** Every candidate's real T-core
   fertility roughly doubled once measured against genuine priority
   concepts instead of trivial common words — `v11_incumbent` scores
@@ -232,19 +250,34 @@ Worth doing once a v12 candidate wins the funnel and gets a Rust port.
 
 ## Not done here (needs compute / corpus / a human decision)
 
-Gate G1 has run for real, twice — first at prototype scale
-(`survivors = [byte_level_bpe_8000_v0]`), then hardened
-(`survivors = []`, see above). The path to an actual survivor is now
-understood (priority-token seeding closes the T-core gap) but not
-finished: no candidate combines T-core seeding with a fix for the
-round-trip/UNK gap, and byte_level_bpe hasn't been tried with an
-equivalent seeding technique. Re-running once C8 is at real frozen scale
-(21.6MB is still far from a frozen C8), T-core is the doc's own frozen
-set (538 real items is a real improvement, not the frozen commitment),
-and
-`census_R_max` is recalibrated against real-scale category-5 measurements
-(today's 0.95 is deliberately permissive/near-no-op, not a considered bar
-— see the decision log) is real remaining work, not done here. TOK-2a/b/c through TOK-4 model
+Gate G1 has run for real, three times now (`survivors = []` the last
+two) — see `hardening_pass_2026_07_19` and `_round2` in
+`pins/tok0_pins.yaml` for the full sequence. Status of each known gap:
+- **T-core fertility (SentencePiece family)**: SOLVED, validated —
+  seeding T-core as `user_defined_symbols` closes it to exactly 1.0.
+- **T-core fertility (byte_level_bpe)**: NOT solved — the seeding
+  technique doesn't transfer cleanly to the `tokenizers` library (two
+  approaches tried, both documented as real negative results). Needs a
+  custom `PreTokenizer`/normalizer-level intervention.
+- **Round-trip/UNK (SentencePiece family)**: PARTIALLY solved —
+  `byte_fallback` fixes UNK completely (0 across the sample corpus) but
+  round-trip still fails, root-caused to a structural SentencePiece
+  behavior (its built-in metaspace step collapses consecutive literal
+  spaces) that no training-time toggle reaches. Real fix needs loading
+  the trained vocab through a properly-constructed HF `tokenizers.Tokenizer`
+  (explicit non-collapsing Metaspace) instead of native
+  `SentencePieceProcessor` — same technique that makes `tokenizer.json`
+  diverge from `v11.model` in the first place. Not built.
+- **Corpus domain balance**: code's mixture share drifted from 15.7% to
+  0.5% when prose/math were scaled and code wasn't (see above) — needs
+  domain proportions frozen by bytes, not done yet.
+- **Corpus scale**: 21.6MB is still far from a frozen C8; T-core (538
+  real items) is a real improvement but not the design doc's frozen
+  commitment; `census_R_max` (0.95) is still deliberately permissive,
+  not a considered bar, pending category-5 measurement at real scale.
+
+None of the above needs GPU compute — they're corpus/engineering work.
+TOK-2a/b/c through TOK-4 model
 training and TOK-5 freeze need GPU compute and/or the frozen C10
 mini-ladder corpus (not yet built, no precedent found anywhere). Those
 are registered as experiments and queued as runs in `chuk-experiments`.

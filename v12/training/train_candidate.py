@@ -29,12 +29,19 @@ def main():
                      help="seed T-core (targets/t_core.jsonl) as SentencePiece user_defined_symbols, "
                           "guaranteeing each is a single vocab piece -- tests whether v11's real "
                           "fertility advantage comes from explicit priority-token injection")
+    ap.add_argument("--byte-fallback", action="store_true",
+                     help="enable SentencePiece's byte_fallback: any character not covered by a "
+                          "learned piece encodes via <0xNN> byte pieces instead of <unk>. Tests "
+                          "whether this fixes the round-trip/UNK hard-reject shared by every "
+                          "unigram_sp/bpe_sp candidate (no piece for literal tab/newline).")
     args = ap.parse_args()
     corpus_txt = V12_ROOT / "corpus" / f"c8_corpus_{args.corpus_version}.txt"
 
     candidate_id = args.candidate_id or f"{args.algorithm}_sp_{args.vocab_size}_{args.corpus_version}"
     if args.seed_t_core:
         candidate_id += "_tcoreseed"
+    if args.byte_fallback:
+        candidate_id += "_bytefallback"
     out_dir = TRAINING_DIR / "candidates" / candidate_id
     out_dir.mkdir(parents=True, exist_ok=True)
     model_prefix = str(out_dir / candidate_id)
@@ -46,6 +53,13 @@ def main():
         model_type=args.algorithm,
         character_coverage=0.9995,
         split_digits=True,  # C6: single-char digits
+        byte_fallback=args.byte_fallback,
+        # identity, not the sentencepiece-library default nmt_nfkc: matches
+        # the RESOLVED_2026_07_19_canonical_tokenizer_decision (tokenizer.json's
+        # non-NFKC, non-whitespace-collapsing behavior is canonical for v11 --
+        # there's no principled reason for freshly-trained v12 candidates to
+        # use different default normalization).
+        normalization_rule_name="identity",
         pad_id=0, unk_id=1, bos_id=2, eos_id=3,
         pad_piece="<pad>", unk_piece="<unk>", bos_piece="<s>", eos_piece="</s>",
         input_sentence_size=0,  # use all lines

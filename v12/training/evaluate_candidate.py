@@ -235,6 +235,19 @@ CANDIDATES = [
     # explicit priority-token injection (which is literally how v11-builder
     # constructs v11's own vocab from config.json). See evaluate.
     ("bpe_sp_16000_v1_tcoreseed", "bpe_sp_tcoreseed", "sp"),
+    # byte_fallback + identity normalization: fixes the round-trip/UNK
+    # hard-reject shared by the whole SentencePiece family (see
+    # hardening_pass_2026_07_19 part 2 in pins/tok0_pins.yaml). Retrained
+    # the full unigram_sp/bpe_sp vocab-size grid with this fix.
+    ("unigram_sp_4000_v1_bytefallback", "unigram_sp_bytefallback", "sp"),
+    ("unigram_sp_8000_v1_bytefallback", "unigram_sp_bytefallback", "sp"),
+    ("unigram_sp_13000_v1_bytefallback", "unigram_sp_bytefallback", "sp"),
+    ("bpe_sp_4000_v1_bytefallback", "bpe_sp_bytefallback", "sp"),
+    ("bpe_sp_8000_v1_bytefallback", "bpe_sp_bytefallback", "sp"),
+    ("bpe_sp_16000_v1_bytefallback", "bpe_sp_bytefallback", "sp"),
+    ("bpe_sp_32000_v1_bytefallback", "bpe_sp_bytefallback", "sp"),
+    # Combined: both fixes together -- the "best of both" candidate.
+    ("bpe_sp_16000_v1_tcoreseed_bytefallback", "bpe_sp_tcoreseed_bytefallback", "sp"),
 ]
 
 

@@ -321,3 +321,81 @@ hardening_pass_2026_07_19: >
   category_5_fraction values are marginally worse than v0's since a bigger vocab against the
   same 32-file v11/corpus eval sample exercises a smaller fraction of it -- expected, not a
   regression, and still not a reason to tighten R_max without a bigger eval sample too).
+
+hardening_pass_2026_07_19_round2: >
+  Follow-up same day ("yeah do it" -- pursuing the round-trip/UNK gap, byte_level_bpe seeding,
+  and further corpus scale). TWO of three attempted:
+
+  (a) byte_fallback + normalization_rule_name=identity: SentencePiece's byte_fallback option
+  (uncovered chars encode via <0xNN> byte pieces instead of <unk>) genuinely, completely fixes
+  the UNK half of the round-trip/UNK hard-reject -- unk_count=0 across all 32 v11/corpus files
+  for every retrained candidate (7 full-grid + 1 combined with T-core seeding). round_trip_pass
+  is STILL false for all of them. Root-caused precisely, going deeper than the earlier 3-way
+  divergence finding: `sp.normalize('    x: float\n')` -> `'▁x:▁float\n'` even under
+  normalization_rule_name="identity" -- SentencePiece's mandatory built-in metaspace-substitution
+  step collapses runs of consecutive literal spaces into ONE marker, and this is NOT reachable
+  via normalizer_spec/normalization_rule_name at all (identity only strips NFKC + nmt_nfkc's
+  *extra*-whitespace rule, not the base add_dummy_prefix/metaspace mechanism itself). This means
+  native SentencePiece's own encode() pipeline cannot structurally replicate real HF Metaspace's
+  "one marker per literal space, no collapsing" semantics through ANY public training-time
+  toggle -- the only real fix is loading a SentencePiece-trained vocab through a properly
+  constructed HF tokenizers.Tokenizer (Unigram/BPE model + explicit Metaspace pretokenizer)
+  instead of native SentencePieceProcessor.encode()/decode(), i.e. exactly the technique that
+  already makes tokenizer.json diverge from v11.model. NOT built this pass (nontrivial for BPE
+  specifically: extracting/converting SentencePiece's internal merge representation into HF's
+  ordered-merges format is real, bounded, but real engineering work, not attempted). See result
+  byte_fallback_fixes_unk_not_roundtrip.
+
+  (b) byte_level_bpe T-core seeding: does NOT transfer cleanly from SentencePiece. Tried (1)
+  ByteLevelBPETokenizer.train(special_tokens=[...]) -- tokens land in vocab but encode() ignores
+  them for matching (special_tokens there means control tokens, not priority-injection with
+  match guarantees); (2) tok.add_tokens([...]) post-training -- DOES force exact-match priority
+  for the literal string, but the leading-space byte-remap ('Ġ') and the added-token lookup
+  operate on mismatched representations, so 'OAuth' still splits as ['Ġ','OAuth'] instead of
+  fusing to ['ĠOAuth']. Real negative/partial result, not silently dropped -- a real fix needs a
+  custom PreTokenizer/normalizer-level intervention, not attempted this pass. See result
+  byte_level_bpe_seeding_partial_negative.
+
+  (c) further C8 scaling: NOT attempted this round -- (a) and (b) took priority as the
+  higher-leverage items (affecting the whole SP-family hard-reject and the byte_level_bpe
+  threshold-reject respectively), and this session's time was reallocated to a comparative
+  analysis against known-strong published tokenizers (see below) at Chris's request. Still real
+  remaining work, unblocked whenever picked back up (assemble_c8_corpus.py's N_PROSE/N_MATH are
+  simple knobs, code corpus scaling would need new source dirs).
+
+  NET RESULT: re-running grid-screen against the full 30-row grid (including all byte_fallback
+  and seeded variants) still gives survivors=[] -- unchanged from the first hardening pass, but
+  now for a more precisely understood reason (UNK is solved; round-trip is a deeper, distinct,
+  diagnosed-but-unsolved issue; T-core fertility is solved for SentencePiece via seeding but not
+  yet for byte_level_bpe). See result g1_hardened_result_zero_survivors_v2.
+
+external_review_2026_07_19: >
+  An external review of the public repo (received the same day, after making v-tokenizers
+  public) was substantively accurate and led to real fixes, not just discussion. Key points
+  taken on board:
+  1. "v11 is publish-ready" was OVERSTATED given the real, disclosed 662-UNK/32-of-32-round-trip-
+     fail gate result on its own corpus -- README.md and v12/README.md corrected to lead with
+     the byte-safety blocker prominently rather than bury it; CI's roundtrip step renamed to
+     "[KNOWN FAILING -- v11 not yet byte-safe]" rather than silently continue-on-error with no
+     visible signal.
+  2. Grid-completeness language corrected: this is an algorithm x vocab-size PILOT with a byte
+     baseline, not the full 4x4x3 grid (pre_tokenization axis entirely unimplemented) -- was
+     technically disclosed before but not stated as plainly as it should have been.
+  3. Corpus domain-proportion drift (code 15.7%->0.5% when prose/math scaled and code didn't)
+     needs fixing by freezing domain proportions BY BYTES at every corpus scale -- agreed,
+     not yet implemented (real follow-up work).
+  4. C2 provenance concern (frozen eval stream tokenized by one contender, not tokenizer-
+     neutral) -- partially already addressed and clarified: a0_dump_stream.py (in the separate
+     corpus-atlas project) already re-tokenizes the same pinned RAW TinyStories stream under any
+     candidate tokenizer, which is exactly the "freeze raw bytes, not one contender's token IDs"
+     invariant the review asks for. The review may not have had visibility into this (it's
+     documented here but is a mechanism in a different repo) -- corrected, not silently agreed
+     with, since the concern wasn't fully accurate as stated.
+  5. Reframing of the T-core seeding finding as "the central v11 advantage may come from
+     vocabulary injection, not the custom segmentation algorithm" is a genuinely sharper
+     hypothesis than this pins file had stated it -- worth carrying forward.
+  6. Proposed decisive next experiment (4 tokenizer families x 2 vocab sizes x 2 model scales,
+     real training, real downstream metrics) is exactly TOK-2/TOK-3 territory per this doc's own
+     funnel design -- correctly identifies that G1's intrinsic metrics can only prune candidates,
+     not select a production tokenizer. NOT started -- needs GPU compute and an explicit
+     scoping decision from Chris, same as every other TOK-2+ item in this file.

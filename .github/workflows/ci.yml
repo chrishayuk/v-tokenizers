@@ -69,7 +69,16 @@ jobs:
         run: python3 bench/msi/test_canonicalizer_parity.py
       - name: harness g0-smoke
         run: python3 bench/tokenizer_bench.py g0-smoke
-      - name: harness roundtrip (real gate check, not required to pass yet --
-          see pins/tok0_pins.yaml incumbent_ledger for the known open findings)
+      # KNOWN FAILING, not a passing gate: v11 is not byte-safe yet (no
+      # runtime byte-fallback -- literal tab/newline/multi-space text
+      # encodes to <unk>, which decode() then drops entirely). Real,
+      # current numbers: 662 UNK / 32-of-32 files fail round-trip on this
+      # repo's own sample corpus. See README.md "Status" and
+      # pins/tok0_pins.yaml incumbent_ledger for the full diagnosis and
+      # what a fix would need. continue-on-error keeps this from blocking
+      # merges on a large, understood, tracked gap -- it is deliberately
+      # NOT hidden (this step name + the two docs above say so loudly);
+      # remove continue-on-error once byte-safety is actually fixed.
+      - name: "harness roundtrip [KNOWN FAILING -- v11 not yet byte-safe]"
         run: python3 bench/tokenizer_bench.py roundtrip
         continue-on-error: true
