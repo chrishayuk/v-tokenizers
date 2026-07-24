@@ -37,13 +37,13 @@ v-tokenizers/
     ci.yml         build + test + fmt --check + clippy -D warnings +
                     coverage (cargo-llvm-cov) + the Python harness smoke
                     tests, on every push/PR.
-    publish.yml    SKELETON, manual workflow_dispatch only, actual publish
-                    steps commented out -- v11's algorithm/tests/fmt/clippy
-                    are clean and it is now byte-safe (real round-trip/UNK
-                    gate passes on its own corpus, see Status below), but
-                    publishing is still a separate, explicit, external
-                    action that needs a human decision (and registry
-                    tokens that aren't configured yet). This workflow
+    publish.yml    Real release pipeline (crates.io + PyPI + HuggingFace
+                    Hub), manual workflow_dispatch only -- v11's algorithm/
+                    tests/fmt/clippy are clean and it is now byte-safe (real
+                    round-trip/UNK gate passes on its own corpus, see Status
+                    below). Requires typing "publish" to confirm plus
+                    CARGO_REGISTRY_TOKEN/PYPI_TOKEN/HF_TOKEN repo secrets,
+                    none of which are configured yet -- this workflow
                     existing is not an endorsement to run it unattended.
 ```
 
@@ -149,10 +149,15 @@ v-tokenizers/
   (their logic is currently exercised indirectly via the bench harness's
   real subprocess-driven checks, not real unit coverage) — getting every
   file to a real 90% is tracked as follow-up work, not claimed as done.
-- **Publishing**: not done. `publish.yml` exists as a reviewed skeleton
-  only; running it requires both an explicit `workflow_dispatch`
-  confirmation and `CARGO_REGISTRY_TOKEN`/PyPI trusted-publisher secrets
-  that aren't configured yet.
+- **Publishing**: not done, but the pipeline is real now (2026-07-24) --
+  `publish.yml` actually publishes to crates.io (v11-core, v11-builder,
+  v11-cli, in dependency order, polling the sparse index in between),
+  PyPI (v11-python via maturin), and HuggingFace Hub (`chrishayuk/
+  v11-tokenizer` by default, overridable per-dispatch), each independently
+  toggleable, gated on typing `publish` to confirm. Running it still needs
+  `CARGO_REGISTRY_TOKEN`/`PYPI_TOKEN`/`HF_TOKEN` repo secrets, none of
+  which are configured yet, and is still a deliberate human action, not
+  something CI triggers on its own.
 
 ## Consuming from tiny-model
 
