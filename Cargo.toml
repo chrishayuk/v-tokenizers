@@ -16,7 +16,7 @@ edition = "2021"
 license = "Apache-2.0"
 description = "v-tokenizers — knowledge-first tokenizer research and production line (v11 stable, v12 experimental design funnel)"
 keywords = ["tokenizer", "nlp"]
-categories = ["text-processing", "science::ml"]
+categories = ["text-processing", "science"]
 repository = "https://github.com/chrishayuk/v-tokenizers"
 homepage = "https://github.com/chrishayuk/v-tokenizers"
 

@@ -35,7 +35,14 @@ v12/training/candidates/
 v12/training/candidates.jsonl
 bench/reports/
 
-# TOK-2 real model-training checkpoints (~330MB each) -- tracked as real
-# artifacts in chuk-experiments, not git history. Small result JSONs and
-# the training log stay tracked.
-v12/training/tok2_runs/*/model_full.pt
+# Model-training checkpoints (~330MB each, any candidate/phase name --
+# model_full.pt was the only one on disk when this rule was first written,
+# narrower than it should've been) -- tracked as real artifacts in
+# chuk-experiments, not git history. Repo-wide: this is a tokenizer repo,
+# a stray .pt/.safetensors/.ckpt anywhere in it is a generated probe
+# artifact, never a real deliverable (v11's own tracked artifacts are
+# .bin/.json, unaffected). Small result JSONs and the training log stay
+# tracked.
+*.pt
+*.safetensors
+*.ckpt

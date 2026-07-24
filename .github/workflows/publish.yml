@@ -93,6 +93,15 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      # maturin-action has no python-version input; it builds against
+      # whatever `python3` resolves to on PATH. GitHub's macos-latest
+      # default is 3.14, newer than PyO3 0.22's max supported 3.13
+      # ("the configured Python interpreter version (3.14) is newer than
+      # PyO3's maximum supported version (3.13)", real failure 2026-07-24)
+      # -- pin explicitly rather than bump PyO3 blind.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - uses: PyO3/maturin-action@v1
         with:
           command: publish
