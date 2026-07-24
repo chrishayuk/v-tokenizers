@@ -6,6 +6,8 @@ license.workspace = true
 description = "Assembles v11 vocabulary from config + tree-sitter AST dumps + WordNet + Wikidata"
 keywords.workspace = true
 categories.workspace = true
+repository.workspace = true
+homepage.workspace = true
 
 [[bin]]
 name = "v11-build"

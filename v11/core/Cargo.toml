@@ -6,6 +6,8 @@ license.workspace = true
 description = "Pure-Rust trie + rule tokenizer runtime for v11. No C++ FFI."
 keywords.workspace = true
 categories.workspace = true
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
 anyhow.workspace = true

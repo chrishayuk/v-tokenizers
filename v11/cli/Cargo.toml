@@ -6,6 +6,8 @@ license.workspace = true
 description = "Command-line interface for the v11 knowledge-first tokenizer"
 keywords.workspace = true
 categories.workspace = true
+repository.workspace = true
+homepage.workspace = true
 
 [[bin]]
 name = "v11"
