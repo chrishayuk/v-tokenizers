@@ -258,6 +258,35 @@ incumbent_ledger:
     specifically on documents containing tab/newline/multi-space runs -- a real, bounded,
     disclosed caveat on that artifact, not a blocker on TOK-1 grid-screen or anything in this
     repo.
+  RESOLVED_2026_07_24_v11_byte_fallback_fix: >
+    v11 byte-safety (tracked since this ledger's own diagnosis, and README.md's Status section)
+    fixed in both places it was broken, prompted by prep for publishing v11 (crates.io + PyPI +
+    HF Hub) as part of the tinystories-train-video work. Two separate bugs, same root shape --
+    the vocab's 256 `<0xNN>` pieces existed but nothing routed an uncovered byte to them by
+    *value*, only by literal string match (which real text never triggers):
+    (1) v11-core (v11/core/src/tokenizer.rs): added a `byte_ids: [Option<u32>; 256]` table
+    built at Tokenizer construction; encode routes a byte with no trie match to its
+    byte-fallback id instead of unk_id (continuation bytes repeat the path byte-by-byte, so an
+    uncovered multi-byte UTF-8 char becomes N byte-fallback ids); decode reads a byte-fallback
+    id's raw byte value instead of its piece text. Verified via this repo's own gate,
+    `bench/tokenizer_bench.py roundtrip`: 662 UNK / 32-of-32 fail -> 0 UNK / 0 mismatches.
+    (2) tokenizer.json itself, independently -- checked directly via the real HF `tokenizers`
+    library against the same 32-file corpus (not v11-core): also 543 UNK / 18-of-32 fail,
+    before any fix, because the JSON's own declared pipeline had `model.byte_fallback` unset
+    and a bare `Metaspace` decoder -- HF's own Unigram implementation had the identical gap
+    loading this exact file. Fixed the same way this ledger's own wrapper_fix_and_first_real_
+    survivor_2026_07_19 entry fixed it for the v12 candidate: `model.byte_fallback: true` +
+    `decoder: Sequence([ByteFallback, Metaspace])` (ByteFallback first -- reassemble bytes
+    before un-replacing the `▁` marker). Fixed at the source in v11-builder's
+    write_hf_tokenizer_json (a future vocab rebuild won't regress it), applied to the
+    checked-in v11/artifacts/tokenizer.json (vocab entries byte-for-byte unchanged, only the
+    model flag + decoder differ), re-verified 0 UNK / 0-of-32 mismatches via the HF
+    `tokenizers` library directly.
+    An earlier, narrower check during the tinystories-train-video session (three plain-English
+    prose samples, no tabs) found 0 UNK on the *unfixed* tokenizer.json and was wrongly read as
+    "this path was never affected" -- it simply never exercised an uncovered character. Recorded
+    here, not just corrected quietly, since a false negative from under-testing is exactly the
+    kind of thing this ledger exists to catch.
 
 tok1_grid_status:
   description: "Real evaluation status of the TOK-1 candidate grid, as of 2026-07-19. See tok-1-intrinsic-screen writeup v4 for full detail and candidates.jsonl (artifact tok-v12-candidates-grid-results:latest) for the raw rows."

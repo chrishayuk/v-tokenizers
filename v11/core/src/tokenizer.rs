@@ -28,6 +28,13 @@ pub struct Tokenizer {
     trie: Trie,
     min_score: f32,
     unk_id: u32,
+    /// `byte_ids[b]` is the vocab id of the `<0xNN>` piece for raw byte `b`,
+    /// if the vocab has byte-fallback pieces at all (older/mini vocabs
+    /// don't, and fall back to plain `unk_id` — see `encode_chunk`).
+    byte_ids: [Option<u32>; 256],
+    /// Reverse of `byte_ids`, for decode: a byte-fallback id maps back to
+    /// its raw byte value instead of its `<0xNN>` piece text.
+    byte_of_id: HashMap<u32, u8>,
 }
 
 struct Trie {
@@ -89,11 +96,13 @@ impl Tokenizer {
         let mut trie = Trie::new();
         let mut min_score = f32::MAX;
         for p in &vocab.pieces {
-            // The four control specials never segment user text.
-            // Everything else — including literal `<0xNN>` pieces — goes
-            // into the trie as an ordinary piece, matching HF's behavior
-            // for this tokenizer.json (byte_fallback is not set, so the
-            // `<0xNN>` strings are opaque literals).
+            // The four control specials never segment user text. Everything
+            // else — including `<0xNN>` pieces — also goes into the trie as
+            // an ordinary piece: real text essentially never contains that
+            // literal 6-character string, so this is harmless, and it keeps
+            // this loop a single pass. The `<0xNN>` pieces' real job is
+            // byte fallback (`byte_ids`/`byte_of_id` below), keyed by their
+            // actual byte value, not string-matched here.
             if p.id == vocab.special.pad_id
                 || p.id == vocab.special.bos_id
                 || p.id == vocab.special.eos_id
@@ -109,11 +118,21 @@ impl Tokenizer {
         if min_score == f32::MAX {
             min_score = 0.0;
         }
+        let mut byte_ids = [None; 256];
+        let mut byte_of_id = HashMap::new();
+        for b in 0u16..256 {
+            if let Some(id) = vocab.byte_fallback_id(b as u8) {
+                byte_ids[b as usize] = Some(id);
+                byte_of_id.insert(id, b as u8);
+            }
+        }
         Self {
             vocab,
             trie,
             min_score,
             unk_id,
+            byte_ids,
+            byte_of_id,
         }
     }
 
@@ -205,6 +224,28 @@ impl Tokenizer {
             }
 
             if !has_single_node {
+                // Byte fallback (only if the vocab has `<0xNN>` pieces at
+                // all -- see `byte_ids`): this single raw byte becomes its
+                // own one-byte lattice edge, not the whole `mblen`-byte
+                // codepoint. Continuation bytes (0x80-0xBF) are `mblen == 1`
+                // per `utf8_char_len`, so the next outer-loop iteration
+                // naturally retries the trie from the next byte and lands
+                // back here for it too -- an uncovered 3-byte codepoint
+                // becomes three byte-fallback ids, which decode reassembles
+                // into the exact original bytes.
+                if let Some(byte_id) = self.byte_ids[bytes[starts_at] as usize] {
+                    let byte_score = self.min_score - K_UNK_PENALTY;
+                    let key_pos = starts_at + 1;
+                    let candidate = best_score_till_here + byte_score;
+                    let target = &mut best[key_pos];
+                    if target.starts_at.is_none() || candidate > target.best_score {
+                        target.starts_at = Some(starts_at as u32);
+                        target.best_score = candidate;
+                        target.id = byte_id;
+                    }
+                    starts_at += 1;
+                    continue;
+                }
                 let unk_score = self.min_score - K_UNK_PENALTY;
                 let key_pos = starts_at + mblen;
                 let candidate = best_score_till_here + unk_score;
@@ -239,8 +280,8 @@ impl Tokenizer {
     }
 
     /// Decode a sequence of token IDs back to text. Matches HF decoding:
-    /// concatenate piece texts (including literal `<0xNN>` strings if any
-    /// slipped in), then reverse-metaspace.
+    /// concatenate piece texts (a byte-fallback id contributes its single
+    /// raw byte, not its `<0xNN>` piece text), then reverse-metaspace.
     pub fn decode(&self, ids: &[u32]) -> String {
         let mut bytes: Vec<u8> = Vec::new();
         for &id in ids {
@@ -251,7 +292,9 @@ impl Tokenizer {
             {
                 continue;
             }
-            if let Some(text) = self.vocab.get_text(id) {
+            if let Some(&byte) = self.byte_of_id.get(&id) {
+                bytes.push(byte);
+            } else if let Some(text) = self.vocab.get_text(id) {
                 bytes.extend_from_slice(text.as_bytes());
             }
         }
@@ -364,6 +407,51 @@ mod tests {
             },
         ];
         Vocab::new(pieces, SpecialTokens::default())
+    }
+
+    /// `mini_vocab` plus all 256 `<0xNN>` byte-fallback pieces, ids 7..263 --
+    /// a vocab shaped like a real one for exercising the fallback path.
+    fn byte_fallback_vocab() -> Vocab {
+        let mut pieces = mini_vocab().pieces;
+        for b in 0u16..256 {
+            pieces.push(Piece {
+                id: 7 + b as u32,
+                text: format!("<0x{b:02X}>"),
+                score: 0.0,
+            });
+        }
+        Vocab::new(pieces, SpecialTokens::default())
+    }
+
+    #[test]
+    fn byte_fallback_round_trips_a_multibyte_char_not_in_vocab() {
+        // 'α' (U+03B1) is 2 UTF-8 bytes, 0xCE 0xB1, covered by neither
+        // "hello"/"world"/"!" -- must become two byte-fallback ids that
+        // decode back to the exact original character, not unk/mangled.
+        let t = Tokenizer::from_vocab(byte_fallback_vocab());
+        let ids = t.encode("hello α world");
+        assert!(!ids.contains(&t.unk_id), "should not need unk: {ids:?}");
+        assert_eq!(t.decode(&ids).trim_start(), "hello α world");
+    }
+
+    #[test]
+    fn byte_fallback_round_trips_a_literal_tab() {
+        // The exact real-world failure this fixes: a literal tab has no
+        // vocab piece (code corpora, per the bench harness's roundtrip
+        // gate) and used to become unk, silently dropped on decode.
+        let t = Tokenizer::from_vocab(byte_fallback_vocab());
+        let ids = t.encode("hello\tworld");
+        assert!(!ids.contains(&t.unk_id), "should not need unk: {ids:?}");
+        assert_eq!(t.decode(&ids).trim_start(), "hello\tworld");
+    }
+
+    #[test]
+    fn byte_fallback_absent_still_falls_back_to_unk() {
+        // mini_vocab (no <0xNN> pieces) must be completely unaffected --
+        // this is the existing `unicode_passes_through_as_unk` behavior.
+        let t = Tokenizer::from_vocab(mini_vocab());
+        let ids = t.encode("α");
+        assert!(ids.iter().all(|&i| i == t.unk_id));
     }
 
     #[test]

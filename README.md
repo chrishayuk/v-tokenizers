@@ -10,10 +10,10 @@ doesn't have to live inside a model-training repo. Fresh git history —
 
 ```
 v-tokenizers/
-  v11/            stable core algorithm, NOT byte-safe yet -- see Status
-                   below before calling this publish-ready. v11/README.md
-                   and v11/SPEC.md have the design and crate layout
-                   (v11-core/v11-builder/v11-cli/v11-bench/v11-demos/v11-python).
+  v11/            stable core algorithm, now byte-safe (see Status below).
+                   v11/README.md and v11/SPEC.md have the design and crate
+                   layout (v11-core/v11-builder/v11-cli/v11-bench/v11-demos/
+                   v11-python).
   v12/            active, pre-registered research funnel (TOK-0..TOK-5).
                    NOT published -- see v12/README.md and
                    v12/pins/tok0_pins.yaml. Promoted to v11's status only
@@ -39,32 +39,62 @@ v-tokenizers/
                     tests, on every push/PR.
     publish.yml    SKELETON, manual workflow_dispatch only, actual publish
                     steps commented out -- v11's algorithm/tests/fmt/clippy
-                    are clean, but it is NOT byte-safe (real round-trip/UNK
-                    gate fails on its own corpus, see Status below) and
-                    should not be published claiming production-readiness
-                    until that's fixed. This workflow existing is not an
-                    endorsement to run it.
+                    are clean and it is now byte-safe (real round-trip/UNK
+                    gate passes on its own corpus, see Status below), but
+                    publishing is still a separate, explicit, external
+                    action that needs a human decision (and registry
+                    tokens that aren't configured yet). This workflow
+                    existing is not an endorsement to run it unattended.
 ```
 
 ## Status
 
-- **v11 is NOT byte-safe -- this is a real release blocker, not a
-  footnote.** No runtime byte-fallback: literal tabs/newlines/multi-space
-  runs embedded in text currently encode to `<unk>`, and `<unk>` is
-  dropped entirely on decode (not even a placeholder). Real, measured
-  consequence on v11's own 32-file sample corpus: 662 UNK total, 32/32
-  files fail exact round-trip -- worst on code (indentation-heavy files
-  hit 19-53 UNK each). The CI `roundtrip` job is `continue-on-error:
-  true` for exactly this reason: it's a known, tracked, currently-failing
-  gate, not a passing one. Until this is fixed, v11 is a research
-  control / restricted-domain tokenizer (fine for plain prose without
-  heavy indentation or tab-formatted text) -- not something to publish
-  or deploy claiming production/byte-safety guarantees. See
-  `v12/pins/tok0_pins.yaml` `incumbent_ledger` for the full diagnosis; a
-  concrete fix path (SentencePiece `byte_fallback` + explicit
-  non-collapsing Metaspace handling) was validated this session for
-  freshly-trained v12 candidates but has NOT been applied to v11's own
-  vocab/artifacts.
+- **v11 is now byte-safe -- FIXED 2026-07-24.** `v11-core`'s own Rust
+  tokenizer (`v11/core/src/tokenizer.rs`) had no runtime byte-fallback:
+  literal tabs/newlines/multi-space runs and any character outside the
+  vocab encoded to `<unk>`, which `decode()` then dropped entirely (not
+  even a placeholder). Real, measured consequence on v11's own 32-file
+  sample corpus: 662 UNK total, 32/32 files failed exact round-trip --
+  worst on code (indentation-heavy files hit 19-53 UNK each). Root cause,
+  found by tracing the actual algorithm: the vocab already carried 256
+  `<0xNN>` byte-fallback pieces, but they were only ever matched as
+  literal 6-character strings in the trie (real text essentially never
+  contains that string) -- nothing routed an uncovered byte to its
+  fallback piece by *value*. Fix: `Tokenizer` now builds a `byte_ids:
+  [Option<u32>; 256]` table (byte value -> vocab id) at construction; on
+  encode, a byte with no trie match becomes its own one-byte lattice edge
+  via that table instead of `unk_id` (continuation bytes naturally repeat
+  the same path byte-by-byte, so an uncovered multi-byte UTF-8 char
+  becomes N byte-fallback ids); on decode, a byte-fallback id contributes
+  its raw byte value, not its `<0xNN>` piece text, so the original bytes
+  reassemble exactly. Verified against this repo's own gate, not just
+  new unit tests: `python3 bench/tokenizer_bench.py roundtrip` now
+  reports **0 UNK, 0 round-trip mismatches, 32/32 files pass** (was 662 /
+  32-of-32-fail before the fix) -- the CI `roundtrip` job is a real,
+  enforced gate now, not `continue-on-error`.
+  **The `tokenizer.json` artifact itself had the identical bug, separately**
+  -- checked directly against the same 32-file corpus via the real HF
+  `tokenizers` Python library (not v11-core): 543 UNK, 18/32 round-trip
+  fail, before any fix. (An earlier, narrower check against three plain-
+  English prose samples during the tinystories-train-video session showed
+  0 UNK and wrongly read as "this path is fine" -- it simply never
+  exercised a tab or an uncovered character. Corrected here so the record
+  doesn't overclaim.) Root cause was the JSON's own declared pipeline, not
+  v11-core: `model.byte_fallback` was unset and `decoder` was a bare
+  `Metaspace` -- so HF's own Unigram implementation, loading this exact
+  file, had no route from an uncovered byte to its `<0xNN>` piece either.
+  Fixed the same way v12's wrapper fix works: `model.byte_fallback: true`
+  plus `decoder: Sequence([ByteFallback, Metaspace])` (order matters --
+  reassemble bytes first, un-replace `▁` second). Fixed at the source in
+  `v11-builder`'s `write_hf_tokenizer_json` (so a future vocab rebuild
+  doesn't regress it) and applied to the checked-in `v11/artifacts/
+  tokenizer.json` (vocab entries byte-for-byte unchanged, only the model
+  flag + decoder differ). Re-verified against the same 32-file corpus via
+  the HF `tokenizers` library directly: 0 UNK, 0/32 mismatches.
+  See `v12/pins/tok0_pins.yaml` `incumbent_ledger` for the v12 fix both of
+  these were adapted from (SentencePiece `byte_fallback` + non-collapsing
+  Metaspace, validated there 2026-07-19) and the entry recording this v11
+  fix.
 - **v11 algorithm/implementation**: builds, all 18 core unit tests pass,
   `cargo fmt --check` and `cargo clippy -- -D warnings` both clean.
   Verified token-for-token identical to real HF `tokenizers` on

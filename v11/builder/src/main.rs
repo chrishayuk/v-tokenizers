@@ -475,14 +475,29 @@ fn write_hf_tokenizer_json(vocab: &Vocab, path: &Path) -> Result<()> {
             "prepend_scheme": "always"
         },
         "post_processor": serde_json::Value::Null,
+        // ByteFallback first (reassemble any `<0xNN>` byte pieces back into
+        // raw bytes), then Metaspace (un-replace `▁`) -- order matters, the
+        // reverse would try to un-replace markers inside literal byte-piece
+        // text. Paired with `model.byte_fallback` below so the vocab's
+        // `<0xNN>` pieces actually get *used* for encoding uncovered
+        // characters, not just carried as inert vocab entries (the bug
+        // this fixes: 662 UNK / 32-of-32 round-trip fail on this repo's
+        // own sample corpus before both pieces were wired together).
         "decoder": {
-            "type": "Metaspace",
-            "replacement": "\u{2581}",
-            "prepend_scheme": "always"
+            "type": "Sequence",
+            "decoders": [
+                { "type": "ByteFallback" },
+                {
+                    "type": "Metaspace",
+                    "replacement": "\u{2581}",
+                    "prepend_scheme": "always"
+                }
+            ]
         },
         "model": {
             "type": "Unigram",
             "unk_id": 1,
+            "byte_fallback": true,
             "vocab": vocab_entries,
         }
     });
