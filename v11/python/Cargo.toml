@@ -1,6 +1,6 @@
 [package]
 name = "v11-python"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license = "Apache-2.0"
 description = "Python bindings for the v11 knowledge-first tokenizer"
@@ -10,7 +10,7 @@ name = "v11"
 crate-type = ["cdylib"]
 
 [dependencies]
-v11-core = { path = "../core", version = "0.1.1" }
+v11-core = { path = "../core", version = "0.1.2" }
 # abi3-py39 builds against the stable ABI, so ONE wheel per platform covers
 # every Python >= 3.9 rather than one per interpreter version. That is what
 # makes the release matrix five legs instead of thirty, and it decouples the

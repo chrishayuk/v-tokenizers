@@ -21,6 +21,13 @@ v-tokenizers/
                    NOT published -- see v12/README.md and
                    v12/pins/tok0_pins.yaml. Promoted to v11's status only
                    once a candidate wins Gate G1/G2/G3.
+  v13/            PRE-REGISTRATION ONLY, nothing built or run. EVO-TOK:
+                   evolutionary/MCTS search over vocabularies whose fitness
+                   is a trained model's held-out BPB per FLOP, rather than
+                   BPE's pair frequency or Unigram's corpus likelihood.
+                   Blocked on v12 TOK-2b settling, since it evolves around
+                   the best vocabulary v12 finds. See
+                   v13/EVO-TOK-preregistration.md.
   bench/          COMMON harness/CLI shared across v11 and v12 -- it
                    already spans both versions (drives v11's compiled
                    binary for the real roundtrip gate check, and
@@ -161,9 +168,11 @@ v-tokenizers/
   cargo add v11-core
   ```
 
-  Note the PyPI **distribution** name is `v11-tokenizer` (import
-  `v11_tokenizer`) even though the crate directory and `publish.yml`'s input
-  are called `v11-python` — don't go looking for a `v11-python` on PyPI.
+  Note the PyPI **distribution** name is `v11-tokenizer` and the import is
+  `import v11` (maturin's `module-name`), even though the crate directory and
+  `publish.yml`'s input are called `v11-python` — three names for one thing,
+  and none of them interchangeable. Don't go looking for a `v11-python` on
+  PyPI.
   The Hub's `tokenizer.json` is byte-identical to `v11/artifacts/tokenizer.json`
   (sha256 `10dd5110…`), i.e. the post-byte-safety-fix build, and to the copy
   vendored in `tinystories-train-video/training/harness_pretrain/`.
@@ -178,8 +187,8 @@ v-tokenizers/
 
 | Destination | Name | Current |
 |---|---|---|
-| crates.io | `v11-core`, `v11-builder`, `v11-cli` | 0.1.1 |
-| PyPI | **`v11-tokenizer`** (import `v11`) | 0.1.1 — 5 abi3 wheels + sdist |
+| crates.io | `v11-core`, `v11-builder`, `v11-cli` | 0.1.2 |
+| PyPI | **`v11-tokenizer`** (import `v11`) | 0.1.2 — 5 abi3 wheels + sdist |
 | HF Hub (model) | `chrishayuk/v11-tokenizer` | built at `ee502e0` |
 | HF Hub (dataset) | `chrishayuk/v11-corpus` | built at `ee502e0` |
 | HF Hub (dataset) | `chrishayuk/v11-wordnet-lemmas` | not published |
@@ -194,6 +203,32 @@ byte-safety fix. Do not expect them to move together.
 `v11-wordnet-lemmas` stays unpublished on purpose: it derives from Princeton
 WordNet, and redistributing a derivative is a licence decision for a human,
 not a workflow default. The `publish_wordnet` toggle is off by default.
+
+### What 0.1.2 changed
+
+Documentation and one wrong string. No vocabulary change, no algorithm change,
+no API change — `tokenizer.json` is the same bytes it has been since the
+2026-07-24 byte-safety fix, so the Hub artifact is untouched by this release.
+
+- **`v11.__version__` stopped lying.** It was a hardcoded `"0.1.0"` literal in
+  `v11/python/src/lib.rs`, so all five 0.1.1 wheels reported the previous
+  version. It now reads `env!("CARGO_PKG_VERSION")` — the literal was never in
+  *Cutting a release*'s bump list below, which is exactly why it drifted, and a
+  value derived from the manifest cannot drift again.
+- **`v11/README.md` still documented the pre-byte-fallback behaviour**, saying
+  the `<0xNN>` pieces were "never matched in practice" and that tabs and
+  newlines become `<unk>`. That has been false since 2026-07-24 and contradicted
+  this file, the enforced CI gate, and the published artifact.
+- **The import name was given two ways.** One paragraph above said `import
+  v11_tokenizer`; the release table and `pyproject.toml`'s `module-name` say
+  `v11`, which is correct.
+- **The layout above omitted v13**, which the roadmap has listed as an active
+  line since its pre-registration landed.
+
+The first item is the reason this is a release rather than a doc commit: PyPI
+renders a package's description from the uploaded distribution and there is no
+way to update it in place, so 0.1.1's page keeps its stale README until a newer
+version ships. Publishing is the only way to correct what PyPI shows.
 
 ### What 0.1.1 changed
 
@@ -250,10 +285,20 @@ exists.
 
 ### Cutting a release
 
-1. Bump `version` in the root `Cargo.toml` `[workspace.package]`, in
-   `[workspace.dependencies].v11-core`, and in `v11/python/Cargo.toml` +
-   `v11/python/pyproject.toml` (workspace-excluded, so it carries its own).
-2. `cargo test --workspace && cargo clippy --all-targets -- -D warnings`.
+1. Bump `version` in five places: the root `Cargo.toml` `[workspace.package]`
+   and its `[workspace.dependencies].v11-core`, then `v11/python/Cargo.toml`'s
+   `[package].version` *and* its own `v11-core` dep line, and
+   `v11/python/pyproject.toml`. `v11/python` is workspace-excluded, so nothing
+   it carries is inherited — it is the one that gets missed.
+
+   Nothing in the tree is a version literal that has to be hand-edited beyond
+   these. `v11.__version__` reads `CARGO_PKG_VERSION` precisely so it can't
+   become a sixth one (it was, through 0.1.1, and reported the wrong version).
+2. `cargo test --workspace && cargo clippy --all-targets -- -D warnings`, then
+   `cargo check --manifest-path v11/python/Cargo.toml`. Both lockfiles are
+   tracked and both must be committed; the second command is the only thing
+   that updates `v11/python/Cargo.lock`, since a workspace build never touches
+   it.
 3. Rehearse it first. `dry_run` builds and packages every destination and
    uploads nothing — three crates packaged, five wheels built, both HF pushes
    staged — and tags nothing. No confirmation word, because it cannot publish:

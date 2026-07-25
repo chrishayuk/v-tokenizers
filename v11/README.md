@@ -81,11 +81,21 @@ pinned-revision replication that closes this gap.
 - **Metaspace pre-tokenization** matching HF `Metaspace(prepend_scheme=always, split=true)`
   — specifically: splits only on the literal space character (0x20), not
   general ASCII whitespace.
-- **Unknown chars → `<unk>` with `min_score - 10` penalty** (no byte fallback
-  at runtime — the `<0xNN>` pieces are in-vocab but never matched in
-  practice, kept for SentencePiece compatibility). This means embedded
-  tab/newline characters in input text currently become `<unk>` — a real,
-  disclosed vocab coverage gap, not a bug in the encoder itself.
+- **Byte fallback at runtime — since 2026-07-24.** A byte the trie can't
+  match becomes its own one-byte lattice edge routed to that byte's
+  `<0xNN>` vocab piece *by value* (a `byte_ids: [Option<u32>; 256]` table
+  built at construction), and on decode a byte-fallback id contributes its
+  raw byte, not its `<0xNN>` piece text — so literal tabs, newlines,
+  multi-space runs and any character outside the vocab round-trip exactly.
+  Measured on this repo's own 32-file corpus: **0 UNK, 32/32 files pass**
+  (662 UNK / 32-of-32-fail before the fix), enforced by the CI `roundtrip`
+  gate. Before that fix the `<0xNN>` pieces were only ever matched as
+  literal 6-character strings, so nothing reached them and uncovered
+  characters really did become `<unk>` — see the root
+  [README](../README.md#status) for the full root-cause writeup.
+- **`<unk>` with `min_score - 10` penalty** remains only for a byte with no
+  fallback piece in the loaded vocab (a vocab built without the 256
+  `<0xNN>` pieces); v11's shipped vocabulary carries all of them.
 
 ## Crate layout
 

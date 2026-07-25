@@ -10,7 +10,7 @@ disagree, they are right and this is stale.
 
 | Line | State | Next thing that has to happen |
 |---|---|---|
-| **v11** | Published at 0.1.1, stable, byte-safe | Decide whether v11.1 is worth a vocabulary rebuild — and that waits on v12 |
+| **v11** | Published at 0.1.2, stable, byte-safe | Decide whether v11.1 is worth a vocabulary rebuild — and that waits on v12 |
 | **v12** | Mid-funnel, first real G1 survivor | TOK-2 is *not decided* — phase3 retrain for v11's side |
 | **v13** | Pre-registration only, nothing built | Blocked on v12 TOK-2b settling |
 
@@ -18,8 +18,9 @@ disagree, they are right and this is stale.
 
 ## v11 — shipped
 
-Live on crates.io, PyPI, and the HF Hub since 2026-07-24, at **0.1.1** since
-2026-07-25. Byte-safe since 2026-07-24: `0 UNK, 32/32 files round-trip`,
+Live on crates.io, PyPI, and the HF Hub since 2026-07-24, at **0.1.2** since
+2026-07-25 (0.1.2 is docs plus a wrong `__version__` string — same vocabulary,
+same API). Byte-safe since 2026-07-24: `0 UNK, 32/32 files round-trip`,
 enforced in CI as a real gate rather than `continue-on-error`. The Rust encoder
 is verified token-for-token identical to HF `tokenizers` on the published
 `tokenizer.json`.
