@@ -22,7 +22,7 @@ same date. No result is implied by this document.
 
 | Arm | Model-visible rows | Paired run labels | Training |
 |---|---:|---:|---|
-| v11 whitespace-exact revision/adapter | 71,261 | 0, 1, 2 | phase 1 + phase 3 |
+| v11 whitespace-exact revision/adapter | 71,260 | 0, 1, 2 | phase 1 + phase 3 |
 | U16 × whitespace_split | exactly 16,000 | 0, 1, 2 | phase 1 + phase 3 |
 | U16 × digit_isolating | exactly 16,000 | 0, 1, 2 | phase 1 + phase 3 |
 | U16 × code_aware | exactly 16,000 | 0, 1, 2 | phase 1 + phase 3 |
@@ -30,6 +30,9 @@ same date. No result is implied by this document.
 | B16 × digit_isolating | exactly 16,000 | 0, 1, 2 | phase 1 + phase 3 |
 | B16 × code_aware | exactly 16,000 | 0, 1, 2 | phase 1 + phase 3 |
 | byte | 260 | 0, 1, 2 | phase 1 + phase 3 |
+
+The v11 arm is exactly `training/v11_ws_exact_manifest.json`, not the older
+71,261-row native SentencePiece model.
 
 All arms consume identical raw bytes in identical order within a seed. Model
 initialization and stochastic training state vary by seed; corpus order does
@@ -122,7 +125,7 @@ stream actually exercises them.
 The exact frozen table is `training/tok2_architecture_controls.json`.
 For the current tied-embedding TinyModel shape it pins FFN widths 2048 for
 v11, 2968 for U16/B16, and 3232 for pure byte under fixed total. The compact
-arms differ from v11's 115,149,824 nominal parameters by -0.027% and +0.017%,
+arms differ from v11's 115,149,312 nominal parameters by -0.027% and +0.018%,
 respectively. `training/validate_tok2_controls.py` recomputes every count from
 the architecture formula.
 

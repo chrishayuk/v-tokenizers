@@ -1,7 +1,8 @@
 # Whole-input and streaming tokenizer contracts
 
-Status: contract pinned for TOK-2 preparation on 2026-07-25. The stateful
-streaming API is specified here but not yet implemented.
+Status: contract pinned for TOK-2 preparation on 2026-07-25. The whole-input
+adapter is implemented; the stateful streaming API is specified here but not
+yet implemented.
 
 ## Whole-input contract
 
@@ -35,8 +36,12 @@ before the experiment runs, the knowledge-rich arm needs either:
 - a separately named, hashed experiment adapter with identical Rust, Python,
   Hugging Face, and model-training behavior.
 
-Whichever route is chosen becomes a distinct arm artifact. The protocol and
-results must not label it as byte-identical to published v11.
+The chosen route is the separately named `v11-ws-exact` experiment adapter,
+pinned in `training/v11_ws_exact_manifest.json`. It wraps the newer canonical
+71,260-row `tokenizer.json`/`v11.vocab.bin` pair, adds no rows, and leaves
+published v11 immutable. The older 71,261-row native SentencePiece model is
+explicitly excluded. The protocol and results must not label the adapter as
+byte-identical to published v11.
 
 ## Stateless chunking is not a supported contract
 

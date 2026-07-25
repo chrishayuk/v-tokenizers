@@ -67,11 +67,30 @@ def validate_offsets(text: str, offsets: list[tuple[int, int]]) -> list[str]:
 class RustCli:
     name = "rust-cli"
 
-    def __init__(self, binary: Path, model: Path):
+    def __init__(self, binary: Path, model: Path, use_batch: bool = False):
         self.binary = binary
         self.model = model
+        self.use_batch = use_batch
+        self.encoded: dict[str, list[int]] = {}
+        self.decoded: dict[tuple[int, ...], str] = {}
+
+    def prepare(self, texts: list[str]) -> None:
+        if not self.use_batch:
+            return
+        result = subprocess.run(
+            [str(self.binary), "--model", str(self.model), "batch"],
+            input=json.dumps(texts, ensure_ascii=False).encode("utf-8"),
+            capture_output=True,
+            check=True,
+        )
+        for row in json.loads(result.stdout.decode("utf-8")):
+            ids = list(row["ids"])
+            self.encoded[row["text"]] = ids
+            self.decoded[tuple(ids)] = row["decoded"]
 
     def encode(self, text: str) -> list[int]:
+        if text in self.encoded:
+            return self.encoded[text]
         base = [str(self.binary), "--model", str(self.model), "encode", "--json"]
         if any(ord(char) < 32 for char in text):
             result = subprocess.run(
@@ -89,6 +108,8 @@ class RustCli:
         return json.loads(result.stdout.decode("utf-8"))["ids"]
 
     def decode(self, ids: list[int]) -> str:
+        if tuple(ids) in self.decoded:
+            return self.decoded[tuple(ids)]
         if not ids:
             return ""
         result = subprocess.run(
@@ -115,6 +136,25 @@ class PythonBinding:
         return self.tokenizer.decode(ids)
 
 
+class WhitespaceExactBinding:
+    """Apply the experiment adapter contract to a native runtime binding."""
+
+    def __init__(self, binding: Any, space_byte_id: int):
+        self.binding = binding
+        self.space_byte_id = space_byte_id
+        self.name = f"{binding.name}-ws-exact"
+        self.version = binding.version
+
+    def encode(self, text: str) -> list[int]:
+        ids = self.binding.encode(text)
+        return [self.space_byte_id, *ids] if text.startswith(" ") else ids
+
+    def decode(self, ids: list[int]) -> str:
+        if ids and ids[0] == self.space_byte_id:
+            return " " + self.binding.decode(ids[1:])
+        return self.binding.decode(ids)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--cases", type=Path, default=HERE / "cases.jsonl")
@@ -124,11 +164,26 @@ def main() -> None:
     parser.add_argument("--auto-tokenizer", action="store_true")
     parser.add_argument("--rust-cli", type=Path)
     parser.add_argument("--python-binding", action="store_true")
+    parser.add_argument(
+        "--ws-exact",
+        action="store_true",
+        help="test the separately named v11-ws-exact adapter over canonical v11",
+    )
     parser.add_argument("--max-failures", type=int, default=50)
     args = parser.parse_args()
 
     artifacts = args.artifacts.resolve()
-    hf = Tokenizer.from_file(str(artifacts / "tokenizer.json"))
+    base_hf = Tokenizer.from_file(str(artifacts / "tokenizer.json"))
+    if args.ws_exact:
+        sys.path.insert(0, str(REPO_ROOT))
+        from v12.training.v11_ws_exact import (
+            WhitespaceExactAutoTokenizer,
+            WhitespaceExactV11,
+        )
+
+        hf = WhitespaceExactV11(base_hf)
+    else:
+        hf = base_hf
     cases = load_cases(args.cases, args.seed, args.random_count)
     adapters = []
     metadata: dict[str, Any] = {
@@ -136,23 +191,42 @@ def main() -> None:
         "static_cases": len(cases) - args.random_count,
         "random_cases": args.random_count,
         "tokenizer_json": str(artifacts / "tokenizer.json"),
+        "adapter": "v11-ws-exact" if args.ws_exact else None,
     }
 
     auto = None
     if args.auto_tokenizer:
-        from transformers import AutoTokenizer
+        if args.ws_exact:
+            auto = WhitespaceExactAutoTokenizer.from_pretrained(artifacts)
+            metadata["transformers_class"] = type(auto.tokenizer).__name__
+        else:
+            from transformers import AutoTokenizer
 
-        auto = AutoTokenizer.from_pretrained(artifacts, local_files_only=True)
-        metadata["transformers_class"] = type(auto).__name__
+            auto = AutoTokenizer.from_pretrained(artifacts, local_files_only=True)
+            metadata["transformers_class"] = type(auto).__name__
     if args.rust_cli:
-        adapters.append(RustCli(args.rust_cli.resolve(), artifacts / "v11.vocab.bin"))
+        adapters.append(
+            RustCli(
+                args.rust_cli.resolve(),
+                artifacts / "v11.vocab.bin",
+                use_batch=args.ws_exact,
+            )
+        )
     if args.python_binding:
         binding = PythonBinding(artifacts / "v11.vocab.bin")
+        if args.ws_exact:
+            binding = WhitespaceExactBinding(binding, hf.space_byte_id)
         adapters.append(binding)
         metadata["python_binding_version"] = binding.version
 
+    for adapter in adapters:
+        prepare = getattr(adapter, "prepare", None)
+        if prepare is not None:
+            prepare([case["text"] for case in cases])
+
     failures: list[dict[str, Any]] = []
     chunk_failures: list[dict[str, Any]] = []
+    chunk_id_mismatches: list[dict[str, Any]] = []
     category_counts = Counter(case["category"] for case in cases)
     checks = 0
 
@@ -176,10 +250,22 @@ def main() -> None:
 
         for point in chunk_points(text, case["id"]):
             reconstructed = ""
+            chunk_ids_combined: list[int] = []
             for chunk in (text[:point], text[point:]):
                 chunk_ids = hf.encode(chunk).ids
+                chunk_ids_combined.extend(chunk_ids)
                 reconstructed += hf.decode(chunk_ids, skip_special_tokens=False)
             checks += 1
+            if chunk_ids_combined != ids and len(chunk_id_mismatches) < args.max_failures:
+                chunk_id_mismatches.append(
+                    {
+                        "case": case["id"],
+                        "category": case["category"],
+                        "split": point,
+                        "whole_ids": ids,
+                        "chunk_ids": chunk_ids_combined,
+                    }
+                )
             if reconstructed != text and expect_roundtrip:
                 if len(chunk_failures) < args.max_failures:
                     chunk_failures.append(
@@ -192,15 +278,26 @@ def main() -> None:
                     )
 
         if auto is not None:
-            auto_encoding = auto(text, add_special_tokens=False, return_offsets_mapping=True)
-            auto_ids = list(auto_encoding["input_ids"])
+            if args.ws_exact:
+                auto_encoding = auto.encode(text)
+                auto_ids = auto_encoding.ids
+                auto_offsets = auto_encoding.offsets
+                decoded = auto.decode(auto_ids, skip_special_tokens=False)
+            else:
+                auto_encoding = auto(text, add_special_tokens=False, return_offsets_mapping=True)
+                auto_ids = list(auto_encoding["input_ids"])
+                auto_offsets = [tuple(pair) for pair in auto_encoding["offset_mapping"]]
+                decoded = auto.decode(
+                    auto_ids,
+                    skip_special_tokens=False,
+                    clean_up_tokenization_spaces=False,
+                )
             checks += 2
             if auto_ids != ids and expect_id_parity:
                 fail(case, "auto-ids", f"hf={ids} auto={auto_ids}")
-            decoded = auto.decode(auto_ids, skip_special_tokens=False, clean_up_tokenization_spaces=False)
             if decoded != text and expect_roundtrip:
                 fail(case, "auto-roundtrip", repr(decoded))
-            for detail in validate_offsets(text, [tuple(pair) for pair in auto_encoding["offset_mapping"]]):
+            for detail in validate_offsets(text, auto_offsets):
                 fail(case, "auto-offsets", detail)
 
         for adapter in adapters:
@@ -222,13 +319,15 @@ def main() -> None:
         "checks": checks,
         "failures_returned": len(failures),
         "independent_chunk_roundtrip_failures_returned": len(chunk_failures),
+        "independent_chunk_id_mismatches_returned": len(chunk_id_mismatches),
         "independent_chunk_roundtrip_note": (
             "diagnostic only: a streaming tokenizer must carry boundary state; "
-            "these failures do not change pass"
+            "round-trip failures and token-ID mismatches do not change pass"
         ),
         "pass": not failures,
         "failures": failures,
         "independent_chunk_roundtrip_failures": chunk_failures,
+        "independent_chunk_id_mismatches": chunk_id_mismatches,
     }
     print(json.dumps(result, indent=2, ensure_ascii=False))
     raise SystemExit(0 if not failures else 1)

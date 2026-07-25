@@ -14,9 +14,9 @@ class Tok2ControlTests(unittest.TestCase):
     def test_reference_formula(self):
         path = Path(__file__).with_name("tok2_architecture_controls.json")
         config = json.loads(path.read_text())
-        counts = parameter_counts(config, 71261, 2048)
-        self.assertEqual(counts["nominal_parameters"], 115149824)
-        self.assertEqual(counts["embedding_output_parameters"], 36485632)
+        counts = parameter_counts(config, 71260, 2048)
+        self.assertEqual(counts["nominal_parameters"], 115149312)
+        self.assertEqual(counts["embedding_output_parameters"], 36485120)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "status": "frozen-pre-run",
+  "adapter_id": "v11-ws-exact",
+  "adapter_revision": 1,
+  "purpose": "TOK-2 knowledge-rich incumbent arm",
+  "base_artifact": {
+    "identity": "newer canonical v11 tokenizer.json/v11.vocab.bin pair",
+    "model_visible_rows": 71260,
+    "tokenizer_json": "../../v11/artifacts/tokenizer.json",
+    "tokenizer_json_sha256": "10dd51100331ab503115db23eee7e8dc3e360e3aed697c8a2e1b12b8f46031ae",
+    "vocab_bin": "../../v11/artifacts/v11.vocab.bin",
+    "vocab_bin_sha256": "873f44dea58558abd355454b6a22281ba69ad5afe850d05e48c271536471905b",
+    "vocab_json": "../../v11/artifacts/v11.vocab.json",
+    "vocab_json_sha256": "62dd05e5c729b176bb2c12518a01d47f134bf46ee80a397316795042360f782c",
+    "excluded_legacy_artifact": "the older 71,261-row native SentencePiece model is not this arm"
+  },
+  "contract": {
+    "rows_added": 0,
+    "leading_ascii_space_sentinel_token": "<0x20>",
+    "leading_ascii_space_sentinel_id": 36,
+    "canonical_metaspace_token": "▁",
+    "canonical_metaspace_id": 714,
+    "encode": "if input starts with U+0020, prefix ID 36 to canonical_v11_encode(complete_input); otherwise canonical_v11_encode(complete_input)",
+    "decode": "if the first ID is 36, prefix one U+0020 to canonical_v11_decode(remaining_ids); otherwise canonical_v11_decode(ids)",
+    "non_leading_input_ids": "byte-identical to canonical v11",
+    "leading_input_suffix_ids": "byte-identical to canonical v11 encoding of the complete input",
+    "streaming": "complete documents only; independent stateless chunks are diagnostic and unsupported"
+  },
+  "implementations": {
+    "rust": {
+      "path": "../v11-ws-exact/src/lib.rs",
+      "sha256": "b6eb3d60fd4429f16604fa5ffc0159f2d4fcf770b23f3f76fa404c0cd44290cb"
+    },
+    "python_hf_and_transformers": {
+      "path": "v11_ws_exact.py",
+      "sha256": "32bbbda0ab5331feeb02b2e8a5b9804b09f6d473cd01b5bbacb03ba1351c8a00"
+    }
+  },
+  "conformance": {
+    "seed": 20260725,
+    "static_cases": 23,
+    "generated_random_unicode_cases": 200,
+    "runtimes": [
+      "tokenizers.Tokenizer",
+      "transformers.AutoTokenizer",
+      "v11-ws-exact Rust",
+      "v11 Python binding 0.1.2"
+    ],
+    "checks": 3080,
+    "whole_input_or_parity_failures": 0,
+    "pass": true,
+    "independent_chunk_id_mismatch_is_diagnostic_only": true
+  }
+}

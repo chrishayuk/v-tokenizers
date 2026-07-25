@@ -11,7 +11,7 @@ disagree, they are right and this is stale.
 | Line | State | Next thing that has to happen |
 |---|---|---|
 | **v11** | Published at 0.1.2, stable, byte-safe | Decide whether v11.1 is worth a vocabulary rebuild — and that waits on v12 |
-| **v12** | Mid-funnel, decisive TOK-2 harness now being prepared | Freeze C8 v3 sources, then run the multi-seed two-control panel |
+| **v12** | Decisive TOK-2 harness prepared; incumbent whole-input gate passes | Freeze C8 v3 sources, then run the multi-seed two-control panel |
 | **v13** | Pre-registration only, nothing built | Blocked on v12 TOK-2b settling |
 
 ---
@@ -36,12 +36,11 @@ name**, never as a new revision of `chrishayuk/v11-tokenizer`.
   bench harness's subprocess-driven checks. No per-file threshold is enforced
   in CI because one would not currently pass — this is follow-up test-writing
   work, not a switch to flip.
-- **Leading-space and streaming semantics.** The new reusable conformance
-  corpus confirms Rust/HF token-ID parity but exposes that canonical
-  `Metaspace(prepend_scheme="always")` drops a literal leading space and that
-  independently encoded chunks lose boundary spaces. Decide whether v11 keeps
-  this canonical behavior or gains an explicitly stateful/preserving interface
-  before advertising arbitrary-input streaming conformance.
+- **Leading-space and streaming semantics.** Published v11 keeps its immutable
+  canonical `Metaspace(prepend_scheme="always")` behavior. TOK-2 uses the
+  separately named `v11-ws-exact` whole-document adapter; its manifest pins the
+  newer 71,260-row canonical base and its Rust/Python behavior. Arbitrary-input
+  streaming remains unsupported until the stateful interface exists.
 
 ### Open, needs a decision first
 
@@ -116,9 +115,9 @@ The protocol now also pins paired run labels, an FFN-width-only
 fixed-total match within 0.25%, byte-parameterized schedules, exactly 16,000
 model-visible compact-vocabulary rows, diagnostic-only structural metrics,
 and no phase-one elimination. `v12/STREAMING_CONTRACT.md` prohibits arbitrary
-stateless chunks and records that published v11 needs a separately named
-whitespace-exact revision or adapter before it satisfies TOK-2's whole-input
-gate.
+stateless chunks. The separately named `v11-ws-exact` adapter now passes the
+whole-input gate across Hugging Face, Transformers, and Rust on 23 fixed plus
+200 generated Unicode cases, while leaving published v11 unchanged.
 
 For the code allocation, `v12/corpus/audit_code_pool.py` inventories immutable
 Git objects with repository/commit/path/hash/language/licence provenance and

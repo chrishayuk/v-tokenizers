@@ -45,9 +45,10 @@ branch_b_pure_byte:
   msi_strict: "≈1.0 by construction — no canonicalization burden"
 
 incumbent:
-  id: "v11_recovered_sp"
-  source: "../v11/artifacts/tokenizer.json"
-  vocab_total: 71261
+  id: "v11_ws_exact"
+  source: "training/v11_ws_exact_manifest.json"
+  base_source: "../v11/artifacts/tokenizer.json"
+  vocab_total: 71260
   exempt_from_elimination: true
 
 shadow_lane_configs:

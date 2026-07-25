@@ -8,7 +8,10 @@
     "model_source_sha256": "7ea6bd0c15581fc14e93eab383508fb023c20ba1198e99f0c3fab9800b3bfc5e",
     "config_source": "model/v11/config.json",
     "config_source_sha256": "43a503240680d20bdd92f78f153ae86e744355876aaf9ffaed5910e6ce7fdd3a",
-    "nominal_parameter_target": 115149824,
+    "nominal_parameter_target": 115149312,
+    "incumbent_tokenizer": "v11-ws-exact",
+    "incumbent_base_tokenizer_json_sha256": "10dd51100331ab503115db23eee7e8dc3e360e3aed697c8a2e1b12b8f46031ae",
+    "incumbent_base_vocab_bin_sha256": "873f44dea58558abd355454b6a22281ba69ad5afe850d05e48c271536471905b",
     "maximum_absolute_mismatch_fraction": 0.0025
   },
   "invariants": {
@@ -33,13 +36,13 @@
   },
   "fixed_trunk": {
     "v11": {
-      "vocab_rows": 71261,
+      "vocab_rows": 71260,
       "ffn_width": 2048,
-      "embedding_output_parameters": 36485632,
+      "embedding_output_parameters": 36485120,
       "trunk_parameters": 78664192,
-      "nominal_parameters": 115149824,
-      "phase1_trainable_parameters": 115149824,
-      "phase3_trainable_parameters": 52225024,
+      "nominal_parameters": 115149312,
+      "phase1_trainable_parameters": 115149312,
+      "phase3_trainable_parameters": 52224512,
       "actively_exercised_parameters": null
     },
     "U16": {
@@ -75,14 +78,14 @@
   },
   "fixed_total": {
     "v11": {
-      "vocab_rows": 71261,
+      "vocab_rows": 71260,
       "ffn_width": 2048,
-      "embedding_output_parameters": 36485632,
+      "embedding_output_parameters": 36485120,
       "trunk_parameters": 78664192,
-      "nominal_parameters": 115149824,
+      "nominal_parameters": 115149312,
       "target_mismatch_fraction": 0.0,
-      "phase1_trainable_parameters": 115149824,
-      "phase3_trainable_parameters": 52225024,
+      "phase1_trainable_parameters": 115149312,
+      "phase3_trainable_parameters": 52224512,
       "actively_exercised_parameters": null
     },
     "U16": {
@@ -91,7 +94,7 @@
       "embedding_output_parameters": 8192000,
       "trunk_parameters": 106926592,
       "nominal_parameters": 115118592,
-      "target_mismatch_fraction": -0.0002712292465162604,
+      "target_mismatch_fraction": -0.0002667840516493924,
       "phase1_trainable_parameters": 115118592,
       "phase3_trainable_parameters": 23931392,
       "actively_exercised_parameters": null
@@ -102,7 +105,7 @@
       "embedding_output_parameters": 8192000,
       "trunk_parameters": 106926592,
       "nominal_parameters": 115118592,
-      "target_mismatch_fraction": -0.0002712292465162604,
+      "target_mismatch_fraction": -0.0002667840516493924,
       "phase1_trainable_parameters": 115118592,
       "phase3_trainable_parameters": 23931392,
       "actively_exercised_parameters": null
@@ -113,7 +116,7 @@
       "embedding_output_parameters": 133120,
       "trunk_parameters": 115036672,
       "nominal_parameters": 115169792,
-      "target_mismatch_fraction": 0.00017340886252678944,
+      "target_mismatch_fraction": 0.00017785603443292827,
       "phase1_trainable_parameters": 115169792,
       "phase3_trainable_parameters": 15872512,
       "actively_exercised_parameters": null

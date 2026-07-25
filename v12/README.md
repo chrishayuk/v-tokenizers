@@ -29,10 +29,10 @@ and byte fallback, and prohibits phase-one elimination.
 and phase-3 RNG streams.
 
 `STREAMING_CONTRACT.md` separates exact whole-document behavior from an
-eventual stateful byte-streaming API. Published v11 remains immutable and
-fails the newly pinned leading-space case; TOK-2 therefore requires a
-separately named whitespace-exact revision/adapter before the incumbent arm
-can run.
+eventual stateful byte-streaming API. Published v11 remains immutable.
+The separately named `v11-ws-exact` adapter now supplies the TOK-2 incumbent
+whole-input contract over the newer canonical 71,260-row artifacts, adding no
+rows; `training/v11_ws_exact_manifest.json` pins its sources and behavior.
 
 Tracked in the `chuk-experiments` server under programme `v12-tokenizer`,
 experiments `tok-0-harness-pinning` through `tok-5-freeze`.
@@ -141,6 +141,8 @@ v-tokenizers/
       tok2_architecture_controls.json exact fixed-trunk/fixed-total counts
       tok2_paired_seeds.json       paired RNG streams and identical data order
       validate_tok2_controls.py    recomputes widths/counts and seed invariants
+      v11_ws_exact.py              Python/HF/Transformers incumbent adapter
+      v11_ws_exact_manifest.json   immutable base hashes and adapter contract
       candidates/<id>/           (gitignored) trained .model + vocab.json per candidate
       candidates.jsonl           (gitignored) real per-candidate evaluation rows
 
@@ -148,6 +150,8 @@ v-tokenizers/
       Cargo.toml               (package name v12-msi)
       src/lib.rs               canonicalize_identity + #[test] against the same
                                 parity_vectors.jsonl the Python side uses
+
+    v11-ws-exact/             Rust whole-input adapter and diagnostic CLI
 ```
 
 ## Preparing C8 v3 and the selective pre-tokenization screen
