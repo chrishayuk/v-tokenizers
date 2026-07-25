@@ -1,0 +1,23 @@
+{"id":"empty","category":"basic","text":""}
+{"id":"ascii","category":"basic","text":"The capital of Japan is Tokyo."}
+{"id":"spaces","category":"whitespace","text":"a  b   c"}
+{"id":"trailing-space","category":"whitespace","text":"trailing "}
+{"id":"leading-space","category":"whitespace","text":" leading"}
+{"id":"leading-two-spaces","category":"whitespace","text":"  x"}
+{"id":"leading-tab","category":"whitespace","text":"\tx"}
+{"id":"leading-newline-space","category":"whitespace","text":"\n x"}
+{"id":"tabs-newlines","category":"whitespace","text":"a\tb\nc\rd\r\ne"}
+{"id":"combining-nfd","category":"unicode","text":"café naïve Å"}
+{"id":"precomposed-nfc","category":"unicode","text":"café naïve Å"}
+{"id":"zero-width","category":"unicode","text":"zero​width‌join‍test⁠end"}
+{"id":"emoji-zwj","category":"unicode","text":"👩‍💻 🧑🏽‍🚀 👨‍👩‍👧‍👦"}
+{"id":"variation-selectors","category":"unicode","text":"✈︎ ✈️ ☺︎ ☺️"}
+{"id":"unusual-scripts","category":"unicode","text":"Ελληνικά हिन्दी 日本語 한글 العربية עברית"}
+{"id":"mixed-direction","category":"unicode","text":"abc אבג 123 العربية xyz"}
+{"id":"embedded-nul","category":"control","text":"before\u0000after"}
+{"id":"other-controls","category":"control","text":"a\u0001b\u0007c\u001bd"}
+{"id":"special-looking","category":"special-literal","text":"literal <pad> <unk> <s> </s> text","expect_decode_roundtrip":false,"expect_id_parity":false}
+{"id":"json-tool","category":"structured","text":"{\"tool\":\"lookup\",\"arguments\":{\"city\":\"東京\",\"n\":12345}}"}
+{"id":"cell-frame","category":"structured","text":"<call> 137 962 922 = 3108 ; 89 69 85 = 83 </call>"}
+{"id":"code-identifiers","category":"code","text":"HTTPServer.parseJSON(foo_bar42, caféValue);"}
+{"id":"invalid-token-lookalikes","category":"special-literal","text":"<0x00> <0xF0> <reserved_42>","expect_decode_roundtrip":false}
