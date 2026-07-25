@@ -11,7 +11,15 @@
     },
     "code": {
       "share": 0.2,
-      "sources": []
+      "sources": [
+        {
+          "path": "code_pool_selected.jsonl",
+          "sha256": "c597e1f26b64ca92922f0a6957aae8f97b44f75d97e6fa7e2d382894ce3e9587",
+          "text_field": "text",
+          "source_field": "source",
+          "manifest": "code_pool_frozen_manifest.json"
+        }
+      ]
     },
     "math_reasoning": {
       "share": 0.15,
@@ -26,11 +34,15 @@
       "sources": []
     }
   },
+  "completed_freeze_items": [
+    "The code domain is frozen at seven revision-pinned repositories with licence evidence, deterministic whole-file selection, and file/repository/language/identifier/near-duplicate caps.",
+    "The selected code source contains 16,159,545 text bytes across 2,340 rows; C8 ignores three empty files and exact deduplication leaves 16,151,568 unique text bytes across 2,324 eligible rows."
+  ],
   "freeze_checklist": [
     "Add at least one revision-pinned, SHA-256-pinned JSONL source per domain.",
     "Keep source rows disjoint from the frozen C3 evaluation slice.",
     "Confirm each domain has enough unique bytes at the largest planned scale.",
-    "Freeze the repository-stratified code pool and its file/repository/language/identifier/duplicate caps.",
+    "COMPLETE: Freeze the repository-stratified code pool and its file/repository/language/identifier/duplicate caps.",
     "Define and pin normalization; the recommended default is identity.",
     "Define a repeated-identifier cap before changing status to frozen.",
     "Build twice and verify identical output_sha256."

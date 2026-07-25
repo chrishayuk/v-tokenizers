@@ -1,14 +1,102 @@
 {
   "schema_version": 1,
   "pool_id": "c8-v3-code-pool",
-  "status": "draft-diagnostic",
+  "status": "frozen",
+  "seed": 20260725,
+  "selection_target_bytes": 17000000,
+  "minimum_selected_bytes": 16000000,
+  "expected_outputs": {
+    "inventory_sha256": "8e328f49a3fb61bccbc6f2e46b4f0c9100a3e5b0ee9082d64e4f7c40d992de3b",
+    "selected_source_sha256": "c597e1f26b64ca92922f0a6957aae8f97b44f75d97e6fa7e2d382894ce3e9587",
+    "selected_rows": 2340,
+    "selected_text_bytes": 16159545,
+    "selected_nonempty_rows": 2337,
+    "selected_empty_rows": 3,
+    "selected_unique_rows": 2324,
+    "selected_unique_text_bytes": 16151568
+  },
   "repositories": [
     {
       "id": "v-tokenizers",
       "path": "../..",
+      "url": "https://github.com/chrishayuk/v-tokenizers.git",
       "commit": "f353ae03571bf77442d40dac5b51e3adfe0046b4",
-      "license_classification": "Apache-2.0",
-      "role": "project-relevant seed; must not dominate the frozen pool"
+      "license_classification": "project-owned; Apache-2.0 declared",
+      "license_evidence_path": "Cargo.toml",
+      "license_evidence_sha256": "079a220cb8afdf4a11ac92cca6fbde7d8741f7a480c97df08939469216f12f80",
+      "role": "project-relevant Rust, Python, Cell80, and tokenizer seed; capped so it cannot dominate"
+    },
+    {
+      "id": "llama.cpp",
+      "path": "code_pool_repos/llama.cpp",
+      "local_candidates": [
+        "../../../llama.cpp"
+      ],
+      "url": "https://github.com/ggerganov/llama.cpp.git",
+      "commit": "6b80c74f285390368b3c99c5e750f19e9b096e98",
+      "license_classification": "MIT",
+      "license_evidence_path": "LICENSE",
+      "license_evidence_sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d",
+      "role": "independently authored C/C++ library, applications, tests, and build configuration"
+    },
+    {
+      "id": "mlx",
+      "path": "code_pool_repos/mlx",
+      "local_candidates": [
+        "../../../mlx"
+      ],
+      "url": "https://github.com/ml-explore/mlx.git",
+      "commit": "0c259961acc2830fd19e3237c84e9ab4d41dbdd0",
+      "license_classification": "MIT",
+      "license_evidence_path": "LICENSE",
+      "license_evidence_sha256": "ccfab7ccb2ea306f71531c8ca77bb55507606cd90768b1e32b8b52ab5b48cf01",
+      "role": "independently authored C++, Python, C, and build-system library code"
+    },
+    {
+      "id": "mistral.rs",
+      "path": "code_pool_repos/mistral.rs",
+      "local_candidates": [
+        "../../../mistral.rs"
+      ],
+      "url": "https://github.com/EricLBuehler/mistral.rs.git",
+      "commit": "79c8d577581bb1cd4869639060ed254bb2a1e1e2",
+      "license_classification": "MIT",
+      "license_evidence_path": "LICENSE",
+      "license_evidence_sha256": "b40bb09c7b3b6f697a8920cf9d2cb3ff8cfcf77a0fcb6d264a92842b43c4dcae",
+      "role": "independently authored Rust library, CLI, server, tests, and configuration"
+    },
+    {
+      "id": "mlx-examples",
+      "path": "code_pool_repos/mlx-examples",
+      "local_candidates": [
+        "../../../mlx-examples"
+      ],
+      "url": "https://github.com/ml-explore/mlx-examples.git",
+      "commit": "07f88f8057d1743f2a147468ad62c51bece783cd",
+      "license_classification": "MIT",
+      "license_evidence_path": "LICENSE",
+      "license_evidence_sha256": "ccfab7ccb2ea306f71531c8ca77bb55507606cd90768b1e32b8b52ab5b48cf01",
+      "role": "application and example code in indentation-sensitive Python plus Swift"
+    },
+    {
+      "id": "mcp-go-sdk",
+      "path": "code_pool_repos/mcp-go-sdk",
+      "url": "https://github.com/modelcontextprotocol/go-sdk.git",
+      "commit": "e761950d9795d120ce9b00e5ba87b93c30a7be90",
+      "license_classification": "MIT and Apache-2.0 transition",
+      "license_evidence_path": "LICENSE",
+      "license_evidence_sha256": "af679003d933f045393a6a029f43da113f9ae364eac651d9ae268392985580f5",
+      "role": "independently authored Go protocol library, tests, examples, and conformance code"
+    },
+    {
+      "id": "mcp-typescript-sdk",
+      "path": "code_pool_repos/mcp-typescript-sdk",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk.git",
+      "commit": "1e1392e3f91583884fe82a0b4b91335875c3fba6",
+      "license_classification": "MIT and Apache-2.0 transition",
+      "license_evidence_path": "LICENSE",
+      "license_evidence_sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a",
+      "role": "independently authored TypeScript/JavaScript protocol library, applications, tests, and configuration"
     }
   ],
   "exclusions": {
@@ -38,12 +126,54 @@
     "multiple independently authored repositories",
     "multiple licences compatible with corpus redistribution"
   ],
-  "cap_scenarios": [],
+  "cap_scenarios": [
+    {
+      "id": "strict",
+      "maximum_bytes_per_file": 98304,
+      "maximum_bytes_per_repository": 4000000,
+      "maximum_share_per_language": 0.25,
+      "maximum_occurrences_per_normalized_identifier": 5000,
+      "maximum_files_per_near_duplicate_cluster": 2
+    },
+    {
+      "id": "balanced",
+      "maximum_bytes_per_file": 131072,
+      "maximum_bytes_per_repository": 5000000,
+      "maximum_share_per_language": 0.3,
+      "maximum_occurrences_per_normalized_identifier": 7500,
+      "maximum_files_per_near_duplicate_cluster": 4
+    },
+    {
+      "id": "permissive",
+      "maximum_bytes_per_file": 262144,
+      "maximum_bytes_per_repository": 6000000,
+      "maximum_share_per_language": 0.35,
+      "maximum_occurrences_per_normalized_identifier": 12000,
+      "maximum_files_per_near_duplicate_cluster": 6
+    }
+  ],
+  "selected_caps": {
+    "scenario_id": "balanced",
+    "maximum_bytes_per_file": 131072,
+    "maximum_bytes_per_repository": 5000000,
+    "maximum_share_per_language": 0.3,
+    "maximum_occurrences_per_normalized_identifier": 7500,
+    "maximum_files_per_near_duplicate_cluster": 4
+  },
+  "cap_selection_rationale": [
+    "The uncapped pool contains 41,466,136 bytes, but llama.cpp alone contributes 59.5% and C++ alone contributes 40.3%.",
+    "A 128 KiB file cap removes only the largest 47 of 3,389 accepted files while excluding 11.7 MB concentrated in unusually large translation units and headers.",
+    "A 5 MB repository cap prevents either llama.cpp or the MCP TypeScript SDK from dominating while retaining all five smaller repositories.",
+    "A 30% per-language cap preserves both indentation-sensitive and brace-delimited code; the selected pool's largest language remains below 30%.",
+    "The 7,500-occurrence identifier cap sits below source-specific concentrations such as ggml_tensor (9,889 uncapped) without treating language keywords as identifiers.",
+    "Four files per SimHash cluster suppresses repeated templates while tolerating the audit's deliberately approximate cross-language near-duplicate detector.",
+    "The strict scenario produced only 13,057,321 bytes and cannot fill the 16 MB C8 code allocation. The balanced scenario produced 16,159,545 bytes; the permissive scenario reached 17 MB but retained materially more repository and duplicate concentration."
+  ],
   "caps_to_freeze_after_diagnostic": {
-    "maximum_bytes_per_file": null,
-    "maximum_bytes_per_repository": null,
-    "maximum_share_per_language": null,
-    "maximum_occurrences_per_normalized_identifier": null,
-    "maximum_files_per_near_duplicate_cluster": null
+    "maximum_bytes_per_file": 131072,
+    "maximum_bytes_per_repository": 5000000,
+    "maximum_share_per_language": 0.3,
+    "maximum_occurrences_per_normalized_identifier": 7500,
+    "maximum_files_per_near_duplicate_cluster": 4
   }
 }

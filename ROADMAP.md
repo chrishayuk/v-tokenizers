@@ -11,7 +11,7 @@ disagree, they are right and this is stale.
 | Line | State | Next thing that has to happen |
 |---|---|---|
 | **v11** | Published at 0.1.2, stable, byte-safe | Decide whether v11.1 is worth a vocabulary rebuild — and that waits on v12 |
-| **v12** | Decisive TOK-2 harness prepared; incumbent whole-input gate passes | Freeze C8 v3 sources, then run the multi-seed two-control panel |
+| **v12** | TOK-2 harness prepared; incumbent gate and C8 code source frozen | Freeze the other four C8 v3 domains, then run the multi-seed panel |
 | **v13** | Pre-registration only, nothing built | Blocked on v12 TOK-2b settling |
 
 ---
@@ -102,7 +102,8 @@ Where it actually is:
   71K vocab), not for raw BPB, so a BPB loss at ≤16K is not automatically a
   loss overall.
 
-**Next:** freeze the real sources in `v12/corpus/c8_v3_spec.json`, then follow
+**Next:** freeze the remaining real sources in `v12/corpus/c8_v3_spec.json`,
+then follow
 `v12/TOK2_DECISIVE_PROTOCOL.md`: at least three seeds, phase one plus phase
 three, identical raw-byte exposure, and two separately reported controls
 (fixed trunk and fixed total parameters). The builder now enforces constant
@@ -119,12 +120,13 @@ stateless chunks. The separately named `v11-ws-exact` adapter now passes the
 whole-input gate across Hugging Face, Transformers, and Rust on 23 fixed plus
 200 generated Unicode cases, while leaving published v11 unchanged.
 
-For the code allocation, `v12/corpus/audit_code_pool.py` inventories immutable
-Git objects with repository/commit/path/hash/language/licence provenance and
-reports identifier and duplicate concentration before caps are selected. Its
-draft spec contains only this repository as a relevance seed; adding diverse
-external repositories and freezing caps remains real corpus work, not an
-implemented-data claim.
+The code allocation is now frozen. `v12/corpus/audit_code_pool.py` inventories
+immutable Git objects with repository/commit/path/hash/language/licence
+provenance and applies the selected pre-model caps. Seven pinned repositories
+produce 16.16 MB across TypeScript, Python, C/C++, Go, Rust, configuration, and
+smaller language strata. `v12/corpus/CODE_POOL_FREEZE.md` records the
+strict/balanced/permissive comparison. Prose, maths/reasoning, JSON/tool/cell,
+noisy Unicode, and C3 exclusion evidence remain open.
 
 Until that panel lands, neither promoting a v12 candidate nor committing to
 v11.1 is a decision the evidence supports.

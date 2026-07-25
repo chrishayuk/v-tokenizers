@@ -71,12 +71,14 @@ deterministic exact-text deduplication, pinned-source digest checks, and
 byte-exact domain budgets whose proportions remain constant under
 `--total-bytes` scale changes. It refuses to repeat a thin domain.
 
-`c8_v3_spec.json` pins the proposed 45/20/15/15/5 proportions, but is
-deliberately marked `draft-awaiting-source-pins`: the current 105KB code
-harvest cannot honestly fill a 16MB code allocation, and full-scale
-revision-pinned sources for JSON/tool/cell and noisy Unicode still need to
-be selected. C8 v3 is therefore **buildable but not frozen**. C3 exclusion
-and the repeated-identifier cap remain freeze checklist items.
+`c8_v3_spec.json` pins the proposed 45/20/15/15/5 proportions and now has a
+frozen code allocation: seven revision-pinned repositories produce 16.16 MB
+after deterministic file/repository/language/identifier/duplicate caps.
+`corpus/code_pool_frozen_manifest.json` records the evidence and exact source
+hash. The overall specification remains deliberately
+`draft-awaiting-source-pins`: full-scale sources for prose, maths/reasoning,
+JSON/tool/cell, and noisy Unicode still need to be selected, and C3 exclusion
+evidence remains open. C8 v3 is therefore **partly sourced but not frozen**.
 
 ## Layout
 
@@ -123,7 +125,10 @@ v-tokenizers/
       c8_v3_spec.json         proposed proportions + explicit freeze checklist
       test_build_c8_v3.py     allocator/reproducibility/UTF-8 regression tests
       audit_code_pool.py      reads pinned Git objects; audits source diversity
-      code_pool_spec.json     repository/licence strata; caps deliberately unset
+      fetch_code_pool.py      populates or verifies pinned repository caches
+      code_pool_spec.json     frozen revisions, licences, scenarios, and caps
+      code_pool_frozen_manifest.json tracked code-source hashes and cap evidence
+      CODE_POOL_FREEZE.md     cap decision and reproduction contract
       test_audit_code_pool.py pinned-object and filtering regression tests
 
     training/                 candidate training + real evaluation (scripts
@@ -181,18 +186,20 @@ proportions:
 python3 v12/corpus/build_c8_v3.py --total-bytes 8000000
 ```
 
-Before filling the 20% code allocation, audit the repository-stratified pool:
+Reproduce the frozen 20% code-source allocation:
 
 ```bash
+python3 v12/corpus/fetch_code_pool.py --reuse-local-candidates
 python3 v12/corpus/audit_code_pool.py
 ```
 
-The draft pool currently contains only this repository as a project-relevant
-seed and is intentionally insufficient. The audit reads the pinned commit
-objects rather than mutable worktrees and reports bytes before/after filtering,
-languages, licences, normalized identifiers, and exact/normalized/SimHash
-duplicate clusters. Add diverse pinned repositories, inspect the diagnostic,
-then preregister cap scenarios; do not choose caps after model results exist.
+The code pool is frozen across seven repositories and four independent author
+groups. The audit reads pinned commit objects rather than mutable worktrees and
+reports bytes before/after filtering, languages, licences, normalized
+identifiers, and exact/normalized/SimHash duplicate clusters. The balanced
+pre-model cap scenario is pinned in `corpus/code_pool_spec.json`; see
+`corpus/CODE_POOL_FREEZE.md` for the strict/balanced/permissive comparison.
+This completes only the code-source lane, not the other C8 v3 domains.
 
 Train one selective arm after C8 v3 freezes:
 

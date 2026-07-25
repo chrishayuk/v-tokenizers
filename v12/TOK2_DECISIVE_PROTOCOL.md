@@ -18,6 +18,11 @@ same date. No result is implied by this document.
 5. The complete architecture/accounting table and all FFN widths are frozen
    before the first run.
 
+The code portion of entry condition 1 is complete and pinned by
+`corpus/code_pool_frozen_manifest.json`. This does not mark C8 v3 as frozen:
+the other four domains and C3 exclusion evidence must still satisfy the same
+condition.
+
 ## Primary arms
 
 | Arm | Model-visible rows | Paired run labels | Training |
