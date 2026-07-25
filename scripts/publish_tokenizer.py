@@ -181,6 +181,16 @@ def build_release(tokenizer_json: Path, out_dir: Path, args, frames) -> tuple[di
 
     normalize_config(out_dir, fast)
 
+    # crates.io ships code, not data. A viewer who runs `cargo install v11-cli`
+    # has a working `v11` binary and no vocabulary for it to open, which makes
+    # every CLI example in the docs unrunnable. Shipping the vocab here is what
+    # closes that -- `v11 --model <hub download> vocab --blocks` then works from
+    # a clean machine with no clone.
+    if args.vocab_bin:
+        if not args.vocab_bin.is_file():
+            sys.exit(f"missing vocab: {args.vocab_bin}")
+        shutil.copyfile(args.vocab_bin, out_dir / args.vocab_bin.name)
+
     golden = golden_encodings(backend, frames)
     (out_dir / "golden_encodings.json").write_text(json.dumps(golden, indent=2))
 
@@ -191,6 +201,7 @@ def build_release(tokenizer_json: Path, out_dir: Path, args, frames) -> tuple[di
     provenance = {
         "schema": "v-tokenizers-provenance-1",
         "tokenizer_sha256": local_sha,
+        "vocab_bin_sha256": sha256_file(args.vocab_bin) if args.vocab_bin else None,
         "vocab_size": backend.get_vocab_size(),
         "status": args.status,
         "source_repo": "https://github.com/chrishayuk/v-tokenizers",
@@ -251,6 +262,23 @@ def normalize_config(out_dir: Path, fast) -> None:
 
 
 def render_card(args, backend, sha, dormant, n_golden) -> str:
+    cli_section = ""
+    if args.vocab_bin:
+        name = args.vocab_bin.name
+        cli_section = f"""
+## Using the Rust CLI
+
+`{name}` is the native vocabulary, shipped here because `cargo install` delivers
+the binary and not the data:
+
+```bash
+cargo install v11-cli
+huggingface-cli download {args.repo_id} {name} --local-dir .
+v11 --model {name} vocab --blocks
+v11 --model {name} encode --text "Once upon a time" --show-pieces
+```
+"""
+
     vocab = backend.get_vocab_size()
     specials = [(role, tok) for role, tok in (
         ("Unknown", args.unk_token), ("Beginning", args.bos_token),
@@ -324,7 +352,7 @@ This repo is immutable: a fix ships under a new name, never as a replacement.
 | Role | Token | ID |
 |---|---|---|
 {rows}
-{dormant_section}
+{cli_section}{dormant_section}
 ## Golden encodings
 
 `golden_encodings.json` carries {n_golden} frames from the MSI frame battery —
@@ -364,6 +392,10 @@ the source repository. {"Dormant-block ids are exposed by this artifact but inac
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--tokenizer-json", type=Path, required=True)
+    ap.add_argument("--vocab-bin", type=Path, default=None,
+                    help="v11.vocab.bin — the native Rust vocabulary. Ship it: "
+                         "`cargo install v11-cli` delivers the binary but not the "
+                         "data, so without this the published CLI has nothing to load.")
     ap.add_argument("--repo-id", required=True)
     ap.add_argument("--output-dir", type=Path, default=None)
     ap.add_argument("--status", choices=sorted(STATUSES), default="candidate")
