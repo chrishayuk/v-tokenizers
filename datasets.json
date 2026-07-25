@@ -1,0 +1,72 @@
+{
+  "_comment": [
+    "What this repo puts in the chuk-datasets catalog (chuk-datasets.fly.dev).",
+    "",
+    "CI runs `register.py verify` against this file on every push: it recomputes",
+    "each content_sha from the files on disk and fails the build if the catalog",
+    "does not carry a version with that sha. That closes the loop between the",
+    "corpus CI measures against and the corpus the catalog claims was measured.",
+    "",
+    "Classes are the spec's enum (§103): pretrain-stream | eval-set |",
+    "probe-corpus | midtrain-corpus | raw-source. None of these are training",
+    "data, so all three are raw-source; the envelope carries the real format.",
+    "",
+    "To add a dataset: add an entry, run `register.py register datasets.json`",
+    "with a write-scoped CHUK_DATASETS_API_KEY, then commit."
+  ],
+
+  "server": "https://chuk-datasets.fly.dev",
+
+  "datasets": [
+    {
+      "name": "v11/corpus",
+      "class": "raw-source",
+      "description": "v11 tokenizer benchmark/spot-check corpus: prose + code across 7 languages, 32 files.",
+      "version_id": "v1",
+      "root": "v11/corpus",
+      "envelope": { "format": "text-files" },
+      "provenance": {
+        "source": "local",
+        "repo": "chrishayuk/v-tokenizers",
+        "path": "v11/corpus",
+        "note": "Hand-assembled. This is the corpus the byte-safety round-trip gate runs against (bench/tokenizer_bench.py roundtrip): 0 UNK, 32/32 files pass as of the 2026-07-24 fix. If this corpus changes, that gate result no longer describes what the catalog holds -- hence CI verification."
+      }
+    },
+    {
+      "name": "v11/wordnet-lemmas",
+      "class": "raw-source",
+      "description": "WordNet lemmas filtered by word frequency (min Zipf 2.5): 27,796 kept of 77,174 raw. A knowledge source the v11 vocabulary is assembled from.",
+      "version_id": "v1",
+      "root": "v11/data",
+      "envelope": { "format": "json" },
+      "provenance": {
+        "source": "derived",
+        "repo": "chrishayuk/v-tokenizers",
+        "path": "v11/data/wordnet_lemmas.json",
+        "derived_from_tools": ["nltk.corpus.wordnet", "wordfreq"],
+        "generated_at": "2026-04-11T14:49:32.169391+00:00",
+        "params": { "min_zipf": 2.5, "total_raw": 77174, "kept": 27796 },
+        "note": "Provenance fields above are read from the file's own header, not asserted here. WordNet carries the Princeton WordNet licence; this extraction is lemma strings plus frequencies."
+      }
+    },
+    {
+      "name": "v11/tokenizer",
+      "class": "raw-source",
+      "description": "The published v11 tokenizer build: HF tokenizer.json + configs, the knowledge vocabulary listing, and the native Rust vocab binary. 71,260 pieces, byte-safe.",
+      "version_id": "v1",
+      "root": "v11/artifacts",
+      "envelope": { "format": "tokenizer-json" },
+      "provenance": {
+        "source": "local",
+        "repo": "chrishayuk/v-tokenizers",
+        "path": "v11/artifacts",
+        "published_to": {
+          "huggingface": "chrishayuk/v11-tokenizer",
+          "pypi": "v11-tokenizer",
+          "crates_io": ["v11-core", "v11-builder", "v11-cli"]
+        },
+        "note": "tokenizer.json sha256 10dd51100331ab503115db23eee7e8dc3e360e3aed697c8a2e1b12b8f46031ae, byte-identical to the HF Hub copy. Separately, the `tokenizer_sha` recorded on tiny-model/v11-rust-tokenized-* versions (873f44dea58558abd355454b6a22281ba69ad5afe850d05e48c271536471905b) is the plain file sha of v11.vocab.bin, which is a member of THIS dataset -- that is how those token streams tie back to a cataloged tokenizer."
+      }
+    }
+  ]
+}

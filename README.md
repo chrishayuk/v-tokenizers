@@ -36,15 +36,13 @@ v-tokenizers/
   .github/workflows/
     ci.yml         build + test + fmt --check + clippy -D warnings +
                     coverage (cargo-llvm-cov) + the Python harness smoke
-                    tests, on every push/PR.
-    publish.yml    Real release pipeline (crates.io + PyPI + HuggingFace
-                    Hub), manual workflow_dispatch only -- v11's algorithm/
-                    tests/fmt/clippy are clean and it is now byte-safe (real
-                    round-trip/UNK gate passes on its own corpus, see Status
-                    below). Requires typing "publish" to confirm plus
-                    CARGO_REGISTRY_TOKEN/PYPI_TOKEN/HF_TOKEN repo secrets,
-                    none of which are configured yet -- this workflow
-                    existing is not an endorsement to run it unattended.
+                    tests + the dataset-catalog sync check, on every push/PR.
+    publish.yml    Release pipeline, manual workflow_dispatch only, typing
+                    "publish" to confirm. Four independently toggleable jobs:
+                    crates.io, PyPI, the tokenizer to HF (via
+                    scripts/publish_tokenizer.py), and the corpus to HF as a
+                    dataset repo. v11 0.1.0 shipped to all three registries
+                    2026-07-24.
 ```
 
 ## Status
@@ -149,15 +147,32 @@ v-tokenizers/
   (their logic is currently exercised indirectly via the bench harness's
   real subprocess-driven checks, not real unit coverage) — getting every
   file to a real 90% is tracked as follow-up work, not claimed as done.
-- **Publishing**: not done, but the pipeline is real now (2026-07-24) --
-  `publish.yml` actually publishes to crates.io (v11-core, v11-builder,
-  v11-cli, in dependency order, polling the sparse index in between),
-  PyPI (v11-python via maturin), and HuggingFace Hub (`chrishayuk/
-  v11-tokenizer` by default, overridable per-dispatch), each independently
-  toggleable, gated on typing `publish` to confirm. Running it still needs
-  `CARGO_REGISTRY_TOKEN`/`PYPI_TOKEN`/`HF_TOKEN` repo secrets, none of
-  which are configured yet, and is still a deliberate human action, not
-  something CI triggers on its own.
+- **Publishing: DONE for v11 (2026-07-24).** All three destinations are live
+  and independently verified:
+
+  | Destination | Name | Version |
+  |---|---|---|
+  | crates.io | `v11-core`, `v11-builder`, `v11-cli` | 0.1.0 |
+  | PyPI | **`v11-tokenizer`** | 0.1.0 |
+  | HuggingFace Hub | `chrishayuk/v11-tokenizer` | — |
+
+  ```sh
+  pip install v11-tokenizer
+  cargo add v11-core
+  ```
+
+  Note the PyPI **distribution** name is `v11-tokenizer` (import
+  `v11_tokenizer`) even though the crate directory and `publish.yml`'s input
+  are called `v11-python` — don't go looking for a `v11-python` on PyPI.
+  The Hub's `tokenizer.json` is byte-identical to `v11/artifacts/tokenizer.json`
+  (sha256 `10dd5110…`), i.e. the post-byte-safety-fix build, and to the copy
+  vendored in `tinystories-train-video/training/harness_pretrain/`.
+
+  `publish.yml` remains manual (`workflow_dispatch`, confirm-gated) and needs
+  `CARGO_REGISTRY_TOKEN`/`PYPI_TOKEN`/`HF_TOKEN`. Tokenizer publication goes
+  through `scripts/publish_tokenizer.py`, not a raw upload -- see below. It is idempotent — each crate
+  is skipped if already on the sparse index — so it is safe to redispatch after
+  a partial failure. v12 is still deliberately excluded.
 
 ## Consuming from tiny-model
 
@@ -165,3 +180,64 @@ v-tokenizers/
 Python path dependency (`../../v-tokenizers/v11/...`), not a copy — both
 repos are expected to live as siblings under the same parent directory on
 a given machine. See `tiny-model/model/v11-train/` for the exact wiring.
+
+## Publishing a tokenizer
+
+`scripts/publish_tokenizer.py` publishes one tokenizer as an immutable,
+`AutoTokenizer`-loadable **model** repo (not a dataset repo). Acceptance
+criterion: a clean environment loads it with no clone, no training code and no
+`trust_remote_code` -- verified against the *downloaded* artifact before the
+script reports success.
+
+```sh
+uv run scripts/publish_tokenizer.py \
+  --tokenizer-json v11/artifacts/tokenizer.json \
+  --repo-id chrishayuk/v11-tokenizer --status adopted --dry-run
+```
+
+Five things it enforces that a plain `upload_folder` cannot:
+
+- **Identity is the content hash, not the Hub revision.** A commit oid changes
+  when you re-push identical bytes or fix a typo in the card. The anchor is
+  `sha256(tokenizer.json)` -- the same value a checkpoint records as
+  `tokenizer_hash`. The revision is recorded as a retrieval coordinate, never
+  as the gate.
+- **Immutability is a precondition.** If the repo exists, its `tokenizer.json`
+  is fetched and hashed *before* anything uploads; a mismatch refuses the push
+  and tells you to publish under a new name. There is no `--force`.
+- **Cross-major loadability.** transformers 5.x writes
+  `tokenizer_class: "TokenizersBackend"`, which 4.x rejects outright
+  (measured: 4.46.3 raises `Tokenizer class TokenizersBackend does not exist`).
+  The staged config is pinned to `PreTrainedTokenizerFast`, which both resolve.
+  Verified on 4.46.3 and 5.14.1, 116/116 golden vectors each.
+- **Golden-vector verification, not a length check.** `len(tok)` plus
+  `special_tokens_map` equality passes straight through a changed normalizer or
+  post-processor. Every frame in `bench/msi/frame_battery.jsonl` -- call
+  operands, post-delimiter, mid-string punctuation -- is replayed id-for-id
+  against the downloaded artifact.
+- **Provenance is a pointer.** `provenance.json` carries the chuk-datasets
+  dataset/version/sha and a chuk-experiments run id. It does not copy the corpus
+  manifest or the results ledger into a second source of truth.
+
+`--status` defaults to `candidate`, which stamps "candidate, NOT adopted" into
+the card. Anything published before TOK-4 adjudicates must stay there.
+
+**When to publish at all:** when an artifact acquires *external* identity --
+referenced by a model repo, a paper, or a reviewer. EVO-TOK will generate
+populations; publishing every candidate would fill the namespace with island
+members. Everything else stays content-addressed in the experiment server.
+
+## Datasets in the catalog
+
+`datasets.json` declares what this repo registers in
+[chuk-datasets](https://chuk-datasets.fly.dev) (`v11/corpus`,
+`v11/wordnet-lemmas`, `v11/tokenizer`). CI verifies on every push that each
+`content_sha` recomputed from disk still matches the catalog, so the corpus the
+round-trip gate measures cannot drift away from the corpus the catalog says was
+measured. Verification needs no credentials; registration needs a write-scoped
+`CHUK_DATASETS_API_KEY`:
+
+```sh
+uv run <chuk-datasets-server>/jobs/register-files/register.py verify   datasets.json
+uv run <chuk-datasets-server>/jobs/register-files/register.py register datasets.json
+```
