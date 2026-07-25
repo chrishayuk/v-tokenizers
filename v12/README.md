@@ -18,9 +18,11 @@ Tracked in the `chuk-experiments` server under programme `v12-tokenizer`,
 experiments `tok-0-harness-pinning` through `tok-5-freeze`.
 
 Lives in the standalone `v-tokenizers` repo (moved 2026-07-19 from
-`tiny-model/tokenizer/v12/`, fresh git history) alongside `v11/` — see
-the repo-root README's Status section before assuming v11 is
-production-ready; it currently is not (not byte-safe). v12 is NOT
+`tiny-model/tokenizer/v12/`, fresh git history) alongside `v11/`. v11 was
+not byte-safe when this was written; it was fixed 2026-07-24 (0 UNK, 32/32
+round-trip, enforced in CI) and published the same day — see the repo-root
+README's Status section for the fix and `ROADMAP.md` for where this funnel
+sits relative to it. v12 is NOT
 published — it's an active, pre-registered research funnel and stays
 private to this repo until a candidate wins Gate G1/G2/G3 and is
 promoted.
