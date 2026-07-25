@@ -322,6 +322,25 @@ referenced by a model repo, a paper, or a reviewer. EVO-TOK will generate
 populations; publishing every candidate would fill the namespace with island
 members. Everything else stays content-addressed in the experiment server.
 
+## Publishing a dataset
+
+`scripts/publish_dataset.py` pushes a directory or single file to a **dataset**
+repo, then proves what landed: every file is downloaded back at the resulting
+revision and sha256-compared against the working tree. Missing files mean a
+partial upload; unexpected files mean the repo carries something this push did
+not put there, which a reader would reasonably assume is current.
+
+```sh
+# audit the live repo against the working tree, uploading nothing
+uv run scripts/publish_dataset.py --root v11/corpus \
+  --repo-id chrishayuk/v11-corpus --verify-only
+```
+
+`--verify-only` exits non-zero if the published dataset has drifted, so it works
+as a standalone audit rather than only as part of a release. Cards live in
+`scripts/cards/` rather than inline in the workflow, so they can be reviewed and
+diffed as text.
+
 ## Datasets in the catalog
 
 `datasets.json` declares what this repo registers in
