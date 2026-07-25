@@ -186,6 +186,7 @@ jobs:
         run: |
           python3 scripts/publish_tokenizer.py \
             --tokenizer-json v11/artifacts/tokenizer.json \
+            --vocab-bin v11/artifacts/v11.vocab.bin \
             --repo-id "${{ github.event.inputs.hf_repo_id }}" \
             --status adopted \
             --source-commit "${{ github.sha }}" \
