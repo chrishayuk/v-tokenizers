@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "v11-tokenizer"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python bindings for the v11 knowledge-first tokenizer (pure Rust)"
 license = { text = "Apache-2.0" }
 readme = "README.md"
@@ -19,6 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Rust",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Text Processing :: Linguistic",

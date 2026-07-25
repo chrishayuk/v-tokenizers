@@ -15,9 +15,9 @@ name: Release (manual)
 #   PYPI_TOKEN            -- PyPI API token, for publish_pypi (maturin-action
 #                            reads it via MATURIN_PYPI_TOKEN)
 #   HF_TOKEN              -- HuggingFace write-access token, for publish_hf
-# None of these exist yet as of this workflow's authoring -- set them
-# before the first real dispatch, `gh secret set NAME` (run it yourself,
-# so the value never appears in any chat/transcript) is the simplest way.
+# All three are set and have been used for a real release (0.1.0, 2026-07-24).
+# If one ever needs rotating, `gh secret set NAME` (run it yourself, so the
+# value never appears in any chat/transcript) is the simplest way.
 
 on:
   workflow_dispatch:
@@ -69,8 +69,10 @@ jobs:
           exit 1
 
   # Ordering matters: v11-builder/v11-cli/v11-python all depend on v11-core
-  # via { path = "../core", version = "0.1.0" } (needed so `cargo publish`
-  # works at all -- path-only deps are rejected). Until v11-core is actually
+  # with both a path and a version (needed so `cargo publish` works at all --
+  # path-only deps are rejected; the version lives in [workspace.dependencies]
+  # in the root Cargo.toml, and v11/python carries its own copy because it is
+  # workspace-excluded). Until v11-core is actually
   # live on the index, publishing any dependent crate fails with "no
   # matching package named `v11-core` found" (verified via `cargo publish
   # --dry-run` 2026-07-24) -- publish v11-core first, poll the sparse index
@@ -141,7 +143,29 @@ jobs:
   publish-pypi:
     needs: guard
     if: ${{ github.event.inputs.publish_pypi == 'true' }}
-    runs-on: macos-latest
+    # One leg per platform, not per interpreter: v11-python builds against
+    # PyO3's stable ABI (abi3-py39), so each wheel covers every Python >= 3.9.
+    # 0.1.0 shipped exactly one wheel -- cp312 macosx_11_0_arm64 -- because
+    # this job was a single macos-latest run, which meant `pip install
+    # v11-tokenizer` on Linux, Windows, Intel Macs, or any non-3.12 Python
+    # fell through to the sdist and needed a Rust toolchain to build it. Full
+    # target triples rather than maturin-action's short aliases, so the runner
+    # and the target can never disagree about what "aarch64" means.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - runner: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+          - runner: macos-latest
+            target: x86_64-apple-darwin
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       # maturin-action has no python-version input; it builds against
@@ -149,14 +173,21 @@ jobs:
       # default is 3.14, newer than PyO3 0.22's max supported 3.13
       # ("the configured Python interpreter version (3.14) is newer than
       # PyO3's maximum supported version (3.13)", real failure 2026-07-24)
-      # -- pin explicitly rather than bump PyO3 blind.
+      # -- pin explicitly rather than bump PyO3 blind. Under abi3 this
+      # interpreter only decides what PyO3 compiles against, not which
+      # Pythons the resulting wheel is installable on.
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      # --skip-existing is what makes the whole matrix redispatchable: every
+      # leg also emits an identical sdist, and the first one to land wins
+      # instead of the other four failing on "file already exists".
       - uses: PyO3/maturin-action@v1
         with:
           command: publish
-          args: --skip-existing -m v11/python/Cargo.toml
+          target: ${{ matrix.target }}
+          manylinux: auto
+          args: --skip-existing --non-interactive -m v11/python/Cargo.toml
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
@@ -295,3 +326,68 @@ jobs:
           )
           print(f"pushed wordnet_lemmas.json to {repo_id}")
           PYEOF
+
+  # ---------------------------------------------------------------------------
+  # Tag the commit that was actually released.
+  #
+  # 0.1.0 shipped to all three registries with no tag behind it, so nothing in
+  # git said which tree the published bytes came from -- and it was not one
+  # tree: v11-core and the PyPI wheel went out from 60ab7c2, v11-builder and
+  # v11-cli from its child 8f9c942, after a partial failure was redispatched.
+  # Reconstructing that needed the Actions run log, which expires. A tag per
+  # release keeps the answer in the repo.
+  #
+  # Runs last and only if nothing failed. Skipped publish jobs are fine (a
+  # single-destination dispatch is a normal thing to do), so this checks for
+  # the absence of failure rather than the presence of success.
+  # ---------------------------------------------------------------------------
+  tag-release:
+    needs: [guard, publish-crates, publish-pypi, publish-hf, publish-datasets]
+    if: >-
+      ${{ always()
+          && needs.guard.result == 'success'
+          && !contains(needs.*.result, 'failure')
+          && !contains(needs.*.result, 'cancelled') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: tag this commit with the workspace version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          version=$(grep -m1 '^version = ' Cargo.toml | sed -E 's/.*"(.*)".*/\1/')
+          tag="v${version}"
+          echo "workspace version: ${version}"
+
+          # Idempotent: redispatching after a partial failure must not fail
+          # here, and must not silently move an existing tag onto a new commit.
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            existing=$(git rev-list -n1 "${tag}")
+            if [ "${existing}" = "${GITHUB_SHA}" ]; then
+              echo "${tag} already points at ${GITHUB_SHA}, nothing to do"
+              exit 0
+            fi
+            echo "::error::${tag} already exists and points at ${existing}, not ${GITHUB_SHA}." \
+                 "Bump the version in Cargo.toml rather than re-releasing under a used tag."
+            exit 1
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${tag}" -m "v-tokenizers ${tag}
+
+          Released by workflow run ${GITHUB_RUN_ID}.
+
+          crates.io:    ${{ github.event.inputs.publish_crates }}
+          PyPI:         ${{ github.event.inputs.publish_pypi }}
+          HF tokenizer: ${{ github.event.inputs.publish_hf }} (${{ github.event.inputs.hf_repo_id }})
+          HF corpus:    ${{ github.event.inputs.publish_datasets }} (${{ github.event.inputs.hf_corpus_repo_id }})
+          HF wordnet:   ${{ github.event.inputs.publish_wordnet }}"
+          git push origin "${tag}"
+          echo "tagged ${GITHUB_SHA} as ${tag}"

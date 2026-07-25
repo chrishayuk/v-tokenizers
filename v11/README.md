@@ -121,6 +121,10 @@ cargo run -p v11-bench --release
 
 ## CLI
 
+Installed (`cargo install v11-cli`) the binary is called `v11`; from a checkout
+use `cargo run -p v11-cli --release --`. Note `vocab` needs 0.1.1 or newer —
+crates.io currently carries 0.1.0, which predates it.
+
 ```bash
 # Encode text
 cargo run -p v11-cli --release -- encode --text "def fibonacci(n):"
@@ -133,7 +137,15 @@ cargo run -p v11-cli --release -- decode --ids "1680,66356,728,34311,276,321,286
 
 # Info about the loaded tokenizer
 cargo run -p v11-cli --release -- info
+
+# Walk the vocabulary by id, or summarize how it's laid out
+cargo run -p v11-cli --release -- vocab --from 432 --count 10
+cargo run -p v11-cli --release -- vocab --blocks
 ```
+
+`vocab --blocks` classifies each piece from its own text and run-length encodes
+the result rather than reading a hardcoded block map, so it can't go stale
+against a rebuilt vocabulary and works on any v11-format vocab.
 
 The CLI auto-discovers `v11/artifacts/v11.vocab.bin`. Override with
 `--model <path>`.
@@ -141,8 +153,16 @@ The CLI auto-discovers `v11/artifacts/v11.vocab.bin`. Override with
 ## Python bindings
 
 ```bash
-cd v11-python
-maturin build --release
+pip install v11-tokenizer     # distribution name; the import is `v11`
+```
+
+Wheels are built against PyO3's stable ABI, so one wheel per platform covers
+every Python >= 3.9. (0.1.0 on PyPI predates that and ships only a macOS
+arm64 / cp312 wheel; elsewhere pip falls back to the sdist and needs a Rust
+toolchain.) To build from a checkout instead:
+
+```bash
+maturin build --release -m v11/python/Cargo.toml
 pip install target/wheels/v11_tokenizer-*.whl
 ```
 
@@ -153,7 +173,7 @@ ids = tok.encode("def fibonacci(n):")
 text = tok.decode(ids)
 ```
 
-See [v11-python/README.md](../v11-python/README.md) for the full API.
+See [python/README.md](python/README.md) for the full API.
 
 ## HuggingFace compatibility
 
@@ -193,12 +213,29 @@ cargo test -p v11-core
 
 ## Release process
 
+Rebuilding the artifacts:
+
 1. `python v11/preprocess_wordnet.py` (only when data changes)
 2. `cargo run -p v11-builder --release -- --config v11/config.json --output v11/artifacts/`
 3. `cargo test --workspace && cargo clippy --all-targets -- -D warnings`
 4. `cargo run -p v11-bench --release` (sanity check)
 5. `cargo run -p v11-demos --release --bin demo-code` (priority coverage check)
-6. Publish the `v11/artifacts/` directory to the model hub of your choice.
+6. `python3 bench/tokenizer_bench.py roundtrip` — the byte-safety gate.
+   Must report 0 UNK and 32/32 files passing; CI enforces it.
+
+Publishing is not a "push `artifacts/` somewhere" step. It goes through
+`scripts/publish_tokenizer.py`, which treats the content hash as the identity,
+refuses to overwrite a repo whose `tokenizer.json` hashes differently, and
+replays every golden vector against the *downloaded* copy before reporting
+success. The whole pipeline — crates.io, PyPI, HF model repo, HF corpus
+dataset, then the release tag — is the confirm-gated **Release (manual)**
+workflow. See [Releases](../README.md#releases) in the root README for the
+version table and the dispatch command.
+
+If the vocabulary itself ever changes, it publishes under a **new repo name**,
+not as a new revision of this one: the existing ids are baked into already-
+trained model weights. See `FOLLOWUPS.md` for the v11.1 vocabulary gaps and
+[ROADMAP.md](../ROADMAP.md) for where they sit relative to v12/v13.
 
 ## License
 

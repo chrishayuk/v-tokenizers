@@ -11,7 +11,7 @@ members = [
 exclude = ["v11/python"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "Apache-2.0"
 description = "v-tokenizers — knowledge-first tokenizer research and production line (v11 stable, v12 experimental design funnel)"
@@ -21,6 +21,12 @@ repository = "https://github.com/chrishayuk/v-tokenizers"
 homepage = "https://github.com/chrishayuk/v-tokenizers"
 
 [workspace.dependencies]
+# The one internal dep. Declared here rather than in each member so a version
+# bump is a single edit -- `cargo publish` rejects a path-only dep, so every
+# dependent has to carry a literal version, and five copies of it drift.
+# v11/python is workspace-excluded (maturin builds it standalone) and keeps
+# its own copy; bump that one too.
+v11-core = { path = "v11/core", version = "0.1.1" }
 # Core deps — small and standard
 anyhow = "1"
 thiserror = "1"

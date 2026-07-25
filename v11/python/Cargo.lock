@@ -3,15 +3,6 @@
 version = 4
 
 [[package]]
-name = "aho-corasick"
-version = "1.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301"
-dependencies = [
- "memchr",
-]
-
-[[package]]
 name = "anyhow"
 version = "1.0.102"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -279,9 +270,8 @@ checksum = "7264e107f553ccae879d21fbea1d6724ac785e8c3bfc762137959b5802826ef3"
 
 [[package]]
 name = "v11-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
- "aho-corasick",
  "anyhow",
  "bincode",
  "byteorder",
@@ -292,7 +282,7 @@ dependencies = [
 
 [[package]]
 name = "v11-python"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "pyo3",
  "v11-core",

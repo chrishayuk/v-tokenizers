@@ -63,7 +63,8 @@
         "published_to": {
           "huggingface": "chrishayuk/v11-tokenizer",
           "pypi": "v11-tokenizer",
-          "crates_io": ["v11-core", "v11-builder", "v11-cli"]
+          "crates_io": ["v11-core", "v11-builder", "v11-cli"],
+          "note": "Package versions deliberately not recorded here. This dataset IS the vocabulary; the crates and wheel are code that reads it, and they version independently -- pinning a version string in this entry would go stale every release without the dataset having changed. The tokenizer.json sha256 below is the identity."
         },
         "note": "tokenizer.json sha256 10dd51100331ab503115db23eee7e8dc3e360e3aed697c8a2e1b12b8f46031ae, byte-identical to the HF Hub copy. Separately, the `tokenizer_sha` recorded on tiny-model/v11-rust-tokenized-* versions (873f44dea58558abd355454b6a22281ba69ad5afe850d05e48c271536471905b) is the plain file sha of v11.vocab.bin, which is a member of THIS dataset -- that is how those token streams tie back to a cataloged tokenizer."
       }

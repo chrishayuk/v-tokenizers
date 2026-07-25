@@ -1,6 +1,6 @@
 [package]
 name = "v11-python"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "Apache-2.0"
 description = "Python bindings for the v11 knowledge-first tokenizer"
@@ -10,5 +10,12 @@ name = "v11"
 crate-type = ["cdylib"]
 
 [dependencies]
-v11-core = { path = "../core", version = "0.1.0" }
-pyo3 = { version = "0.22", features = ["extension-module"] }
+v11-core = { path = "../core", version = "0.1.1" }
+# abi3-py39 builds against the stable ABI, so ONE wheel per platform covers
+# every Python >= 3.9 rather than one per interpreter version. That is what
+# makes the release matrix five legs instead of thirty, and it decouples the
+# wheels from whatever Python the runner happens to ship -- 0.1.0 published a
+# single cp312 macOS-arm64 wheel, so `pip install` on every other platform
+# silently fell back to building the sdist from source and needed a Rust
+# toolchain to do it. Keep in step with `requires-python` in pyproject.toml.
+pyo3 = { version = "0.22", features = ["extension-module", "abi3-py39"] }

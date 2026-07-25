@@ -12,7 +12,7 @@ name = "v11-bench"
 path = "src/main.rs"
 
 [dependencies]
-v11-core = { path = "../core", version = "0.1.0" }
+v11-core.workspace = true
 anyhow.workspace = true
 clap.workspace = true
 serde_json.workspace = true

@@ -6,6 +6,9 @@ independently of any one model project, and so the harness/CI around it
 doesn't have to live inside a model-training repo. Fresh git history —
 `tiny-model`'s own history has the full backstory if it's ever needed.
 
+[ROADMAP.md](ROADMAP.md) has what's done, what's open, and what's deliberately
+not being worked on across all three lines.
+
 ## Layout
 
 ```
@@ -38,11 +41,13 @@ v-tokenizers/
                     coverage (cargo-llvm-cov) + the Python harness smoke
                     tests + the dataset-catalog sync check, on every push/PR.
     publish.yml    Release pipeline, manual workflow_dispatch only, typing
-                    "publish" to confirm. Four independently toggleable jobs:
-                    crates.io, PyPI, the tokenizer to HF (via
+                    "publish" to confirm. Four independently toggleable
+                    destinations: crates.io, PyPI (five-platform abi3 wheel
+                    matrix), the tokenizer to HF (via
                     scripts/publish_tokenizer.py), and the corpus to HF as a
-                    dataset repo. v11 0.1.0 shipped to all three registries
-                    2026-07-24.
+                    dataset repo -- then a tag-release job that tags the
+                    released commit if none of them failed. v11 0.1.0 shipped
+                    to all three registries 2026-07-24; see Releases below.
 ```
 
 ## Status
@@ -147,14 +152,9 @@ v-tokenizers/
   (their logic is currently exercised indirectly via the bench harness's
   real subprocess-driven checks, not real unit coverage) — getting every
   file to a real 90% is tracked as follow-up work, not claimed as done.
-- **Publishing: DONE for v11 (2026-07-24).** All three destinations are live
-  and independently verified:
-
-  | Destination | Name | Version |
-  |---|---|---|
-  | crates.io | `v11-core`, `v11-builder`, `v11-cli` | 0.1.0 |
-  | PyPI | **`v11-tokenizer`** | 0.1.0 |
-  | HuggingFace Hub | `chrishayuk/v11-tokenizer` | — |
+- **Publishing: v11 is live on all three registries (2026-07-24).** See
+  [Releases](#releases) for the version table, what 0.1.1 changes, and how
+  tagging works.
 
   ```sh
   pip install v11-tokenizer
@@ -173,6 +173,78 @@ v-tokenizers/
   through `scripts/publish_tokenizer.py`, not a raw upload -- see below. It is idempotent — each crate
   is skipped if already on the sparse index — so it is safe to redispatch after
   a partial failure. v12 is still deliberately excluded.
+
+## Releases
+
+| Destination | Name | Published | Prepared |
+|---|---|---|---|
+| crates.io | `v11-core`, `v11-builder`, `v11-cli` | 0.1.0 | 0.1.1 |
+| PyPI | **`v11-tokenizer`** (import `v11`) | 0.1.0 | 0.1.1 |
+| HF Hub (model) | `chrishayuk/v11-tokenizer` | at `ee502e0` | — |
+| HF Hub (dataset) | `chrishayuk/v11-corpus` | at `ee502e0` | — |
+| HF Hub (dataset) | `chrishayuk/v11-wordnet-lemmas` | not published | — |
+
+**The Hub artifact does not carry the crate version, and that is deliberate.**
+Its identity is `sha256(tokenizer.json)` (`10dd5110…`), because a version
+string is an assertion and a content hash is a fact -- see *Publishing a
+tokenizer* below. The crate/wheel version tracks the *code* that reads the
+vocabulary; the vocabulary itself is unchanged since the 2026-07-24
+byte-safety fix. Do not expect them to move together.
+
+`v11-wordnet-lemmas` stays unpublished on purpose: it derives from Princeton
+WordNet, and redistributing a derivative is a licence decision for a human,
+not a workflow default. The `publish_wordnet` toggle is off by default.
+
+### What 0.1.1 changes
+
+Prepared but **not yet published** -- publishing is a manual, confirm-gated
+dispatch (see *Cutting a release*). Two things, both consequences of 0.1.0
+having been cut before they were noticed:
+
+- **`v11 vocab` reaches the published CLI.** The subcommand landed in `ee502e0`
+  about three hours after `v11-cli` 0.1.0 went to crates.io, so
+  `cargo install v11-cli` currently gets a binary without it.
+- **Wheels for platforms other than one.** 0.1.0 put a single
+  `cp312-macosx_11_0_arm64` wheel on PyPI, so `pip install v11-tokenizer`
+  on Linux, Windows, an Intel Mac, or any non-3.12 Python fell through to the
+  sdist and needed a Rust toolchain to build it. `v11-python` now builds
+  against PyO3's stable ABI (`abi3-py39`) across five target triples, so one
+  wheel per platform covers every Python >= 3.9. Verified locally: the
+  `cp39-abi3` wheel built under 3.12 installs and round-trips under 3.14.
+
+### Tags
+
+Every release commit carries an annotated `vX.Y.Z` tag, created by the
+`tag-release` job in `publish.yml` once no publish job has failed.
+
+0.1.0 predates that job and is tagged retroactively at `8f9c942`. That tag is
+approximate by necessity and says so in its own message: `v11-core` and the
+PyPI wheel actually shipped from the parent commit `60ab7c2` before a partial
+failure was fixed and redispatched, so no single commit is exactly right. The
+two differ only in `.github/workflows/publish.yml`, so the published crate and
+wheel *sources* are identical at both. This ambiguity is the reason the job
+exists.
+
+### Cutting a release
+
+1. Bump `version` in the root `Cargo.toml` `[workspace.package]`, in
+   `[workspace.dependencies].v11-core`, and in `v11/python/Cargo.toml` +
+   `v11/python/pyproject.toml` (workspace-excluded, so it carries its own).
+2. `cargo test --workspace && cargo clippy --all-targets -- -D warnings`.
+3. Dispatch **Release (manual)**, typing `publish` to confirm:
+
+   ```sh
+   gh workflow run publish.yml -f confirm=publish \
+     -f publish_crates=true -f publish_pypi=true \
+     -f publish_hf=true -f publish_datasets=true
+   ```
+
+   Every destination is independently toggleable, and each is idempotent
+   (crates skip if already on the sparse index, `maturin publish` uses
+   `--skip-existing`, the tokenizer push refuses to overwrite a differing
+   hash), so redispatching after a partial failure is safe and expected.
+4. The `tag-release` job pushes `vX.Y.Z`. It refuses to move a tag that
+   already points somewhere else -- bump the version instead.
 
 ## Consuming from tiny-model
 
