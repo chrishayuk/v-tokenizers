@@ -137,6 +137,37 @@ in the document rather than silently fixed.
   `v11-demos` did, and a stray `cargo publish -p v11-bench` would have gone
   through. They are exercised by the release checklist and CI, not shipped.
 
+### The release pipeline works, and is not yet trustworthy on its own
+
+Both releases so far produced a bug in the pipeline rather than in the
+tokenizer, and in both cases every job reported success while something had
+silently not happened. The standing lesson: **check the registries, not the
+run's own verdict.**
+
+| Release | What went wrong | What catches it now |
+|---|---|---|
+| 0.1.0 | Sparse-index path used the web-API shape, so a genuinely successful publish looked like a failure | Correct path derivation, documented in the job |
+| 0.1.1 | Skip guard asked whether the crate existed on the index at all — true forever after the first version — so it published nothing and passed | Per-version check, plus an assertion that all three versions are actually on the index |
+
+Open, in rough priority order:
+
+- **`publish-datasets` and `publish-hf` have no equivalent assertion.** The
+  crates job now proves its own outcome; the tokenizer push does too, via
+  golden-vector replay against the downloaded artifact. The dataset push is
+  still a bare `upload_folder` that reports success without verifying what
+  landed. It is the last "trust the run" step in the pipeline.
+- **The manylinux legs depend on `quay.io` being reachable.** A `docker pull`
+  of `quay.io/pypa/manylinux2014_*` timed out mid-release (2026-07-25,
+  "context deadline exceeded"), failing that leg and — because `tag-release`
+  requires no job to have failed — skipping tagging. Harmless in effect: the
+  whole pipeline is idempotent, so a re-dispatch skips everything already
+  published and completes the tag. But it means a red release run is not
+  automatically a real problem, which is exactly the ambiguity the assertions
+  above exist to remove. Worth a retry on the pull rather than living with it.
+- **No dry-run mode.** Every rehearsal of a publish change is a real publish.
+  Both bugs above were found *after* shipping, and crates.io versions cannot
+  be deleted, only yanked.
+
 ## Not on the roadmap
 
 - Publishing v12 candidates. They are funnel members; publishing every one
