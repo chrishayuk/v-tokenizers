@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "pool_id": "c8-v3-code-pool",
+  "status": "draft-diagnostic",
+  "repositories": [
+    {
+      "id": "v-tokenizers",
+      "path": "../..",
+      "commit": "f353ae03571bf77442d40dac5b51e3adfe0046b4",
+      "license_classification": "Apache-2.0",
+      "role": "project-relevant seed; must not dominate the frozen pool"
+    }
+  ],
+  "exclusions": {
+    "path_components": [
+      ".git",
+      "node_modules",
+      "vendor",
+      "vendors",
+      "third_party",
+      "artifacts",
+      "data",
+      "dist",
+      "build",
+      "target",
+      "coverage",
+      "__pycache__"
+    ],
+    "minified_average_line_bytes": 500
+  },
+  "required_strata": [
+    "ordinary application code",
+    "libraries",
+    "tests",
+    "build and configuration files",
+    "indentation-sensitive languages",
+    "brace-delimited languages",
+    "multiple independently authored repositories",
+    "multiple licences compatible with corpus redistribution"
+  ],
+  "cap_scenarios": [],
+  "caps_to_freeze_after_diagnostic": {
+    "maximum_bytes_per_file": null,
+    "maximum_bytes_per_repository": null,
+    "maximum_share_per_language": null,
+    "maximum_occurrences_per_normalized_identifier": null,
+    "maximum_files_per_near_duplicate_cluster": null
+  }
+}

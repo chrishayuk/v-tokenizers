@@ -31,6 +31,8 @@ build/
 v12/corpus/c8_corpus_v*.jsonl
 v12/corpus/c8_corpus_v*.txt
 v12/corpus/c8_code_corpus.jsonl
+v12/corpus/code_pool_inventory*.jsonl
+v12/corpus/code_pool_audit*.json
 v12/training/candidates/
 v12/training/candidates.jsonl
 bench/reports/
