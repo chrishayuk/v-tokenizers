@@ -68,7 +68,7 @@ Aho-Corasick pass with no C++ FFI hops.
 ```bash
 maturin build --release
 ls target/wheels/
-# v11_tokenizer-0.1.1-cp39-abi3-macosx_11_0_arm64.whl
+# v11_tokenizer-0.1.2-cp39-abi3-macosx_11_0_arm64.whl
 ```
 
 The `cp39-abi3` tag is the stable-ABI build: that one file installs on any

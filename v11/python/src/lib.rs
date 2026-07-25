@@ -106,6 +106,10 @@ impl PyTokenizer {
 #[pymodule]
 fn v11(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyTokenizer>()?;
-    m.add("__version__", "0.1.0")?;
+    // Read from the crate manifest rather than a literal: a hardcoded string
+    // silently drifts from `Cargo.toml`/`pyproject.toml` at every version bump
+    // (it reported 0.1.0 from the 0.1.1 wheels), and a version that lies is
+    // worse than no version at all.
+    m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     Ok(())
 }
