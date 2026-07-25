@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "slice_id": "c3-v12",
+  "status": "freeze-before-tok2-results",
+  "frozen_date": "2026-07-25",
+  "seed": 20260726,
+  "items_per_domain": 40,
+  "domains": {
+    "natural_prose": {
+      "path": "c8_v3_sources/natural_prose.jsonl",
+      "sha256": "1221f54706d67a5a3f130f41fec4a31a60a781b403a3240d2da865d1b8ee1b51"
+    },
+    "code": {
+      "path": "code_pool_selected.jsonl",
+      "sha256": "c597e1f26b64ca92922f0a6957aae8f97b44f75d97e6fa7e2d382894ce3e9587",
+      "maximum_text_bytes": 2048,
+      "maximum_heldout_bytes": 81920,
+      "constraint_reason": "The separately frozen code training pool has 151,568 unique bytes of headroom above its 16 MB allocation; bound the 40-item holdout before hash selection so exclusion cannot make that allocation infeasible."
+    },
+    "math_reasoning": {
+      "path": "c8_v3_sources/math_reasoning.jsonl",
+      "sha256": "ddefc41e79ecafa206f1e9d33d65e12834747b606795dfa5e3c6321e33e29972"
+    },
+    "json_tool_cell": {
+      "path": "c8_v3_sources/json_tool_cell.jsonl",
+      "sha256": "a3dec04557a7550428b12359654d9ae460e2f65802e7111e8f9a0d752950fd26"
+    },
+    "noisy_unicode_mixed": {
+      "path": "c8_v3_sources/noisy_unicode_mixed.jsonl",
+      "sha256": "6e4919cabf020b73150d325210e68b28c88e01d6ddb4cda46bd1241831edf071"
+    }
+  }
+}
