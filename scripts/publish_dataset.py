@@ -51,11 +51,9 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import os
-import sys
 from pathlib import Path
 
-from huggingface_hub import HfApi, hf_hub_download
+from huggingface_hub import HfApi, get_token, hf_hub_download
 
 
 def sha256_file(path: Path) -> str:
@@ -159,7 +157,11 @@ def main() -> None:
         print("  dry run          nothing uploaded")
         return
 
-    token = os.environ.get("HF_TOKEN")
+    # get_token() is huggingface_hub's own resolution order: HF_TOKEN, then the
+    # cached `huggingface-cli login` credential. Reading HF_TOKEN directly would
+    # refuse a perfectly normal local publish by someone who is logged in, and
+    # would disagree with publish_tokenizer.py sitting next to it.
+    token = get_token()
     api = HfApi(token=token)
 
     if args.verify_only:
@@ -170,21 +172,35 @@ def main() -> None:
         return
 
     if not token:
-        raise SystemExit("HF_TOKEN is not set -- refusing to attempt an upload")
+        raise SystemExit(
+            "no Hugging Face token -- set HF_TOKEN or run `huggingface-cli login`"
+        )
 
     api.create_repo(args.repo_id, repo_type="dataset", exist_ok=True)
 
     msg = args.commit_message or f"publish {len(manifest)} files"
     if args.root.is_dir():
-        # delete_patterns so a file removed locally is removed on the Hub too;
-        # without it the repo silently accumulates whatever it used to hold,
-        # and the extra-files check below would then fail on every later run.
+        # Delete exactly the files that are on the Hub and not in the source
+        # tree, computed rather than globbed. Something like ["**"] is the
+        # obvious spelling and is wrong: it also matches README.md, which this
+        # script writes separately from the mirrored tree, so a push that
+        # omitted --card would silently delete the dataset card and still
+        # report success. That is not hypothetical -- it was measured against a
+        # real repo, and it is exactly the kind of quiet loss this script exists
+        # to make impossible.
         #
-        # This has to run BEFORE the card: "**" matches README.md, which is not
-        # in the source tree, so uploading the card first would delete it here.
+        # Deleting nothing is equally wrong: the repo would accumulate whatever
+        # it used to hold, and a reader cannot tell a stale file from a current
+        # one.
+        existing = set(api.list_repo_files(args.repo_id, repo_type="dataset"))
+        stale = sorted(existing - set(manifest) - {".gitattributes", "README.md"})
+        if stale:
+            print(f"  removing         {len(stale)} file(s) no longer in the source tree")
+            for s in stale[:10]:
+                print(f"    - {s}")
         api.upload_folder(
             folder_path=str(args.root), path_in_repo="", repo_id=args.repo_id,
-            repo_type="dataset", delete_patterns=["**"], commit_message=msg,
+            repo_type="dataset", delete_patterns=stale or None, commit_message=msg,
         )
     else:
         api.upload_file(
