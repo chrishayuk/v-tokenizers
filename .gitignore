@@ -40,6 +40,7 @@ v12/corpus/c8_v3_sources/
 v12/corpus/c3_v12_heldout.jsonl
 v12/training/candidates/
 v12/training/candidates.jsonl
+v12/training/tok2_production_runs/
 bench/reports/
 
 # Model-training checkpoints (~330MB each, any candidate/phase name --

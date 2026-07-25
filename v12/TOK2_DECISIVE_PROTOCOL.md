@@ -18,15 +18,20 @@ same date. No result is implied by this document.
 5. The complete architecture/accounting table and all FFN widths are frozen
    before the first run.
 
-Entry conditions 1, 2, and 5 are complete. C8 v3 and fresh C3 exclusion are
+Entry conditions 1, 2, 4, and 5 are complete. C8 v3 and fresh C3 exclusion are
 pinned by `corpus/c8_v3_spec.json` and `corpus/c3_v12_manifest.json`; the
 architecture table and paired seeds are frozen in `training/`. All eight
 tokenizer artifacts are pinned by `training/tok2_tokenizer_arms.json`.
 
 The complete 48-cell orchestration canary passed on 2026-07-25; see
 `training/TOK2_REHEARSAL.md`. Canary loss and timing are explicitly
-non-ranking diagnostics. Entry condition 4 still requires the production
-byte-scheduled training/checkpoint/evaluation manifest before expensive runs.
+non-ranking diagnostics. The production byte streams, checkpoints, evaluation
+schedule, 48 run IDs, and statistical analysis are now frozen by
+`training/tok2_production_spec.json`,
+`training/tok2_production_manifest.json`, and
+`training/analyze_tok2_production.py`. `training/TOK2_PRODUCTION.md` records
+the zero-step preflight and launch contract. Entry condition 3 remains a
+runtime preflight gate on the exact execution environment.
 
 ## Primary arms
 
