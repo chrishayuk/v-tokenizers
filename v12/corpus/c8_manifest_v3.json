@@ -7,6 +7,7 @@
   "seed": 20260725,
   "total_bytes_target": 80000000,
   "total_bytes_actual": 80000000,
+  "full_frozen_scale_output_pin_enforced": true,
   "domain_shares_constant_across_scales": true,
   "selection": "sha256(seed, domain, text_sha256), without replacement",
   "deduplication": "exact UTF-8 text SHA-256 within and across domains",

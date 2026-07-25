@@ -306,7 +306,8 @@ def build(spec_path: Path, output_path: Path, manifest_path: Path, total_bytes: 
 
     output_sha256 = sha256_file(output_path)
     expected_output = spec.get("expected_output")
-    if require_pins:
+    is_full_frozen_scale = build_total == int(spec["total_bytes"])
+    if require_pins and is_full_frozen_scale:
         if not expected_output:
             raise ValueError("frozen C8 spec must pin expected_output")
         expected_sha256 = expected_output.get("sha256")
@@ -339,6 +340,7 @@ def build(spec_path: Path, output_path: Path, manifest_path: Path, total_bytes: 
         "seed": seed,
         "total_bytes_target": build_total,
         "total_bytes_actual": actual_total,
+        "full_frozen_scale_output_pin_enforced": is_full_frozen_scale,
         "domain_shares_constant_across_scales": True,
         "selection": "sha256(seed, domain, text_sha256), without replacement",
         "deduplication": "exact UTF-8 text SHA-256 within and across domains",
