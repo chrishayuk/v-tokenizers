@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "rehearsal_id": "tok2-decisive-tiny-rehearsal-v1",
+  "status": "frozen-canary-not-a-model-result",
+  "matrix": {
+    "controls": [
+      "fixed_trunk",
+      "fixed_total"
+    ],
+    "paired_run_labels": [
+      0,
+      1,
+      2
+    ],
+    "expected_arms": 8,
+    "expected_cells": 48,
+    "phase1_elimination": "prohibited"
+  },
+  "inputs": {
+    "arms": "tok2_tokenizer_arms.json",
+    "architecture_controls": "tok2_architecture_controls.json",
+    "paired_seeds": "tok2_paired_seeds.json",
+    "c8_corpus": "../corpus/c8_corpus_v3.jsonl",
+    "c8_corpus_sha256": "9eee14cd0b1b5b4f2d476d4fbde55c50a40b9aec09d204fd63cf1a036282e466",
+    "c3_manifest": "../corpus/c3_v12_manifest.json",
+    "c3_manifest_sha256": "8d09fac1ee7619628dd643e3dc59f3195a82f23cdc70215d6745f9d16e72925f",
+    "c3_heldout": "../corpus/c3_v12_heldout.jsonl",
+    "c3_heldout_sha256": "52ab2ebb20b80585d56fe6f2ba292750b95c04eeef1af12673d6ad651710d08f"
+  },
+  "data_rehearsal": {
+    "training_documents_per_domain_per_phase": 1,
+    "training_document_min_bytes": 16,
+    "training_document_max_bytes": 768,
+    "required_domains": [
+      "natural_prose",
+      "code",
+      "math_reasoning",
+      "json_tool_cell",
+      "noisy_unicode_mixed"
+    ],
+    "evaluation_documents_per_domain": 1,
+    "selection": "lowest sha256(document_order_seed, domain, text_sha256); phase 3 excludes phase 1; evaluation is drawn only from frozen C3",
+    "whole_documents_are_tokenized": true,
+    "stateless_arbitrary_chunks": false
+  },
+  "canary_model": {
+    "purpose": "exercise orchestration only; losses and timings cannot rank tokenizers",
+    "device": "cpu",
+    "dimension": 16,
+    "layers": 1,
+    "attention_heads": 4,
+    "maximum_sequence_length": 64,
+    "production_ffn_scale_divisor": 32,
+    "ffn_width_multiple": 8,
+    "phase1_learning_rate": 0.0003,
+    "phase3_learning_rate": 0.00015,
+    "weight_decay": 0.01,
+    "optimizer": "AdamW",
+    "phase1_passes": 1,
+    "phase3_passes": 1,
+    "production_parameter_counts_are_validated_against_the_pinned_TinyModel_source_on_meta_device": true
+  },
+  "required_assertions": [
+    "all 48 matrix cells complete phase 1, phase 3, and evaluation",
+    "every arm sees identical ordered raw document hashes within each phase",
+    "every tokenizer artifact hash and runtime row count matches the frozen arm manifest",
+    "whole-input round trip succeeds and UNK is absent for every rehearsal document",
+    "fixed-trunk shared trunk tensors are byte-identical across arms for a paired seed",
+    "attention initialization is byte-identical across arms within each control and paired seed",
+    "phase-3 attention reinitialization is byte-identical across arms for a paired seed",
+    "production nominal and phase-specific trainable counts match actual TinyModel modules",
+    "no phase-1 quality value eliminates a matrix cell",
+    "every accounting record includes raw bytes, documents, tokens, predicted tokens, steps, estimated FLOPs, wall time, and memory"
+  ]
+}

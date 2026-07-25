@@ -13,8 +13,9 @@ subword configs) plus the pure-byte branch. What exists today is an
 historical candidates all use one implicit pretokenization. As of
 2026-07-25, the missing axis is implemented for the only six cells that
 still answer a useful question (U16/B16 × `whitespace_split`/
-`digit_isolating`/`code_aware`), but those candidates have **not been
-trained on the full corpus**. Real implementation, not a claimed result.
+`digit_isolating`/`code_aware`). Those six candidates are now trained on
+frozen C8 v3 and pinned at exactly 16,000 runtime rows. This is a frozen
+tokenizer input to TOK-2, not a model-quality result.
 
 The next-run design is pinned in `TOK2_DECISIVE_PROTOCOL.md`: three seeds,
 phase one plus phase three, identical raw-byte exposure, confidence
@@ -27,6 +28,12 @@ and byte fallback, and prohibits phase-one elimination.
 (FFN 2968 for U16/B16 and 3232 for byte under fixed total), while
 `training/tok2_paired_seeds.json` separates trunk, vocabulary-shaped, phase-1,
 and phase-3 RNG streams.
+
+The complete 8-arm × 2-control × 3-seed orchestration rehearsal has passed:
+48/48 cells reached phase 1, phase 3, and held-out evaluation with identical
+ordered raw-document hashes and no phase-1 eliminations. The rehearsal uses a
+small canary model and cannot rank tokenizers. See
+`training/TOK2_REHEARSAL.md`.
 
 `STREAMING_CONTRACT.md` separates exact whole-document behavior from an
 eventual stateful byte-streaming API. Published v11 remains immutable.
@@ -49,21 +56,20 @@ promoted.
 
 ## Data
 
-C8 (`v12/corpus/`) is a **new, three-domain corpus** — it does not reuse
-v11's corpus wholesale, only one small slice of it. Real numbers from the
-current build (`c8_manifest_v2.json` / `c8_code_corpus_manifest.json`):
+C8 v3 (`v12/corpus/`) is frozen at exactly 80,000,000 UTF-8 text bytes:
 
-| domain | source | rows | bytes | share | shares anything with v11? |
-|---|---|---|---|---|---|
-| prose | fresh `roneneldan/TinyStories` sample, pinned hub_sha | 80,000 | 72.4MB | 90.6% | same *dataset* as v11's LM training data, but an independently-sampled slice — not the same documents (v11's original training never pinned a revision, so this can't even be checked directly) |
-| math_structured | `cell-native-architectures` (sibling `cell80` repo), cn7/cn8 corpora | 120,000 | 7.5MB | 9.3% | no — v11 never saw this domain at all |
-| code | this repo's own v11/v12/bench Rust+Python source, plus `v11/corpus/code`'s 18 small multi-language sample files | 31 files | 105KB | 0.1% | **yes** — `build_code_corpus.py`'s `SOURCE_DIRS` directly harvests `v11/corpus/code` as one of six source directories |
+| domain | bytes | share |
+|---|---:|---:|
+| natural prose | 36,000,000 | 45% |
+| repository-stratified code | 16,000,000 | 20% |
+| maths/reasoning | 12,000,000 | 15% |
+| JSON/tool/cell syntax | 12,000,000 | 15% |
+| noisy Unicode/mixed text | 4,000,000 | 5% |
 
-`v11/corpus/prose/` is **not** used anywhere in C8 — prose comes from a
-fresh TinyStories sample instead, not from v11's small benchmark prose
-files. See `v11/README.md`'s Data section for what `v11/corpus/` actually
-is (a small v11-bench spot-check sample; v11's vocab itself isn't
-corpus-trained at all).
+The corpus is source- and output-hash pinned, identity-normalized,
+exact-deduplicated, and byte-identical across two independent builds. A fresh
+200-item C3 slice is excluded with zero exact-text overlap. See
+`corpus/C8_V3_FREEZE.md` and `corpus/C3_V12_EXPOSURE.md`.
 
 Historical build order: `build_code_corpus.py` →
 `assemble_c8_corpus.py`. The replacement `build_c8_v3.py` implements
@@ -146,6 +152,12 @@ v-tokenizers/
       tok2_architecture_controls.json exact fixed-trunk/fixed-total counts
       tok2_paired_seeds.json       paired RNG streams and identical data order
       validate_tok2_controls.py    recomputes widths/counts and seed invariants
+      tok2_tokenizer_arms.json     exact hashes/row counts for all eight arms
+      tok2_tokenizer_retrain_audit.json B16 deterministic/U16 stochastic evidence
+      prepare_tok2_tokenizer_arms.py trains or verifies the six U16/B16 artifacts
+      rehearse_tok2_matrix.py      48-cell non-ranking orchestration canary
+      tok2_rehearsal_results.json  tracked rehearsal evidence
+      TOK2_REHEARSAL.md            scope, results, and reproduction
       v11_ws_exact.py              Python/HF/Transformers incumbent adapter
       v11_ws_exact_manifest.json   immutable base hashes and adapter contract
       candidates/<id>/           (gitignored) trained .model + vocab.json per candidate
@@ -159,21 +171,9 @@ v-tokenizers/
     v11-ws-exact/             Rust whole-input adapter and diagnostic CLI
 ```
 
-## Preparing C8 v3 and the selective pre-tokenization screen
+## Reproducing C8 v3 and the selective pre-tokenization screen
 
-Fill every domain's `sources` list in `c8_v3_spec.json` with JSONL source
-descriptors. A frozen source descriptor must include `path` and `sha256`;
-`where` can filter a shared JSONL file:
-
-```json
-{
-  "path": "source.jsonl",
-  "sha256": "...",
-  "where": {"field": "domain", "equals": "code"}
-}
-```
-
-Then mark the specification `frozen` and build:
+Materialize the frozen sources and build:
 
 ```bash
 python3 v12/corpus/build_c8_v3.py
@@ -199,7 +199,6 @@ reports bytes before/after filtering, languages, licences, normalized
 identifiers, and exact/normalized/SimHash duplicate clusters. The balanced
 pre-model cap scenario is pinned in `corpus/code_pool_spec.json`; see
 `corpus/CODE_POOL_FREEZE.md` for the strict/balanced/permissive comparison.
-This completes only the code-source lane, not the other C8 v3 domains.
 
 Train one selective arm after C8 v3 freezes:
 
@@ -212,7 +211,8 @@ python3 v12/training/train_structural_candidate.py \
 Repeat for `unigram`/`bpe` × `whitespace_split`/`digit_isolating`/
 `code_aware`. Each output directory contains the runtime
 `tokenizer.json` and a `candidate.json` that pins corpus and artifact
-digests.
+digests. `prepare_tok2_tokenizer_arms.py` performs and verifies the complete
+six-arm preparation.
 
 Produce the common structural profile:
 

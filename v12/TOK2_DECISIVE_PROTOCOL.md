@@ -18,10 +18,15 @@ same date. No result is implied by this document.
 5. The complete architecture/accounting table and all FFN widths are frozen
    before the first run.
 
-The code portion of entry condition 1 is complete and pinned by
-`corpus/code_pool_frozen_manifest.json`. This does not mark C8 v3 as frozen:
-the other four domains and C3 exclusion evidence must still satisfy the same
-condition.
+Entry conditions 1, 2, and 5 are complete. C8 v3 and fresh C3 exclusion are
+pinned by `corpus/c8_v3_spec.json` and `corpus/c3_v12_manifest.json`; the
+architecture table and paired seeds are frozen in `training/`. All eight
+tokenizer artifacts are pinned by `training/tok2_tokenizer_arms.json`.
+
+The complete 48-cell orchestration canary passed on 2026-07-25; see
+`training/TOK2_REHEARSAL.md`. Canary loss and timing are explicitly
+non-ranking diagnostics. Entry condition 4 still requires the production
+byte-scheduled training/checkpoint/evaluation manifest before expensive runs.
 
 ## Primary arms
 
