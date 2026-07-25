@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "status": "frozen-pre-run",
+  "reference": {
+    "repository": "tiny-model",
+    "commit": "6cc4868fc0cd64f648844419532959d19c5e12ef",
+    "model_source": "model/v11-core/src/tiny_model_v11/model.py",
+    "model_source_sha256": "7ea6bd0c15581fc14e93eab383508fb023c20ba1198e99f0c3fab9800b3bfc5e",
+    "config_source": "model/v11/config.json",
+    "config_source_sha256": "43a503240680d20bdd92f78f153ae86e744355876aaf9ffaed5910e6ce7fdd3a",
+    "nominal_parameter_target": 115149824,
+    "maximum_absolute_mismatch_fraction": 0.0025
+  },
+  "invariants": {
+    "d_model": 512,
+    "layers": 20,
+    "attention_heads": 8,
+    "kv_heads": 4,
+    "head_dimension": 64,
+    "maximum_sequence_length": 256,
+    "tied_input_output_embeddings": true,
+    "bias_parameters": false,
+    "fixed_total_dimension_allowed_to_change": "ffn_intermediate_width_only",
+    "ffn_width_hardware_multiple": 8
+  },
+  "parameter_formula": {
+    "embedding_output_tied": "vocab_rows * d_model",
+    "attention_per_layer": "d_model*d_model + 2*d_model*(kv_heads*head_dimension) + d_model*d_model",
+    "norms_per_layer": "2*d_model",
+    "ffn_per_layer": "3*d_model*ffn_width",
+    "final_norm": "d_model",
+    "phase3_frozen": "all FFN matrices and each layer's FFN norm"
+  },
+  "fixed_trunk": {
+    "v11": {
+      "vocab_rows": 71261,
+      "ffn_width": 2048,
+      "embedding_output_parameters": 36485632,
+      "trunk_parameters": 78664192,
+      "nominal_parameters": 115149824,
+      "phase1_trainable_parameters": 115149824,
+      "phase3_trainable_parameters": 52225024,
+      "actively_exercised_parameters": null
+    },
+    "U16": {
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "embedding_output_parameters": 8192000,
+      "trunk_parameters": 78664192,
+      "nominal_parameters": 86856192,
+      "phase1_trainable_parameters": 86856192,
+      "phase3_trainable_parameters": 23931392,
+      "actively_exercised_parameters": null
+    },
+    "B16": {
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "embedding_output_parameters": 8192000,
+      "trunk_parameters": 78664192,
+      "nominal_parameters": 86856192,
+      "phase1_trainable_parameters": 86856192,
+      "phase3_trainable_parameters": 23931392,
+      "actively_exercised_parameters": null
+    },
+    "byte": {
+      "vocab_rows": 260,
+      "ffn_width": 2048,
+      "embedding_output_parameters": 133120,
+      "trunk_parameters": 78664192,
+      "nominal_parameters": 78797312,
+      "phase1_trainable_parameters": 78797312,
+      "phase3_trainable_parameters": 15872512,
+      "actively_exercised_parameters": null
+    }
+  },
+  "fixed_total": {
+    "v11": {
+      "vocab_rows": 71261,
+      "ffn_width": 2048,
+      "embedding_output_parameters": 36485632,
+      "trunk_parameters": 78664192,
+      "nominal_parameters": 115149824,
+      "target_mismatch_fraction": 0.0,
+      "phase1_trainable_parameters": 115149824,
+      "phase3_trainable_parameters": 52225024,
+      "actively_exercised_parameters": null
+    },
+    "U16": {
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "embedding_output_parameters": 8192000,
+      "trunk_parameters": 106926592,
+      "nominal_parameters": 115118592,
+      "target_mismatch_fraction": -0.0002712292465162604,
+      "phase1_trainable_parameters": 115118592,
+      "phase3_trainable_parameters": 23931392,
+      "actively_exercised_parameters": null
+    },
+    "B16": {
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "embedding_output_parameters": 8192000,
+      "trunk_parameters": 106926592,
+      "nominal_parameters": 115118592,
+      "target_mismatch_fraction": -0.0002712292465162604,
+      "phase1_trainable_parameters": 115118592,
+      "phase3_trainable_parameters": 23931392,
+      "actively_exercised_parameters": null
+    },
+    "byte": {
+      "vocab_rows": 260,
+      "ffn_width": 3232,
+      "embedding_output_parameters": 133120,
+      "trunk_parameters": 115036672,
+      "nominal_parameters": 115169792,
+      "target_mismatch_fraction": 0.00017340886252678944,
+      "phase1_trainable_parameters": 115169792,
+      "phase3_trainable_parameters": 15872512,
+      "actively_exercised_parameters": null
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "status": "frozen-pre-run",
+  "data_order": {
+    "phase1_document_order_seed": 20260725,
+    "phase3_document_order_seed": 20260726,
+    "evaluation_order_seed": 20260727,
+    "rule": "identical ordered document hashes for every arm and every paired run label"
+  },
+  "paired_runs": [
+    {
+      "label": 0,
+      "trunk_initialization_seed": 202607250,
+      "embedding_output_initialization_seed": 202608250,
+      "phase1_stochasticity_seed": 202609250,
+      "phase3_attention_reinitialization_seed": 202610250,
+      "phase3_stochasticity_seed": 202611250
+    },
+    {
+      "label": 1,
+      "trunk_initialization_seed": 202607251,
+      "embedding_output_initialization_seed": 202608251,
+      "phase1_stochasticity_seed": 202609251,
+      "phase3_attention_reinitialization_seed": 202610251,
+      "phase3_stochasticity_seed": 202611251
+    },
+    {
+      "label": 2,
+      "trunk_initialization_seed": 202607252,
+      "embedding_output_initialization_seed": 202608252,
+      "phase1_stochasticity_seed": 202609252,
+      "phase3_attention_reinitialization_seed": 202610252,
+      "phase3_stochasticity_seed": 202611252
+    }
+  ],
+  "initialization_rule": "initialize the shared trunk and vocabulary-shaped embedding/output tensors from independent generators; verify shared fixed-trunk tensors are byte-identical across arms before the first optimizer step"
+}

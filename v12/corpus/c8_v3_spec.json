@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "corpus_id": "c8-v3",
+  "status": "draft-awaiting-source-pins",
+  "seed": 20260725,
+  "total_bytes": 80000000,
+  "domains": {
+    "natural_prose": {
+      "share": 0.45,
+      "sources": []
+    },
+    "code": {
+      "share": 0.2,
+      "sources": []
+    },
+    "math_reasoning": {
+      "share": 0.15,
+      "sources": []
+    },
+    "json_tool_cell": {
+      "share": 0.15,
+      "sources": []
+    },
+    "noisy_unicode_mixed": {
+      "share": 0.05,
+      "sources": []
+    }
+  },
+  "freeze_checklist": [
+    "Add at least one revision-pinned, SHA-256-pinned JSONL source per domain.",
+    "Keep source rows disjoint from the frozen C3 evaluation slice.",
+    "Confirm each domain has enough unique bytes at the largest planned scale.",
+    "Freeze the repository-stratified code pool and its file/repository/language/identifier/duplicate caps.",
+    "Define and pin normalization; the recommended default is identity.",
+    "Define a repeated-identifier cap before changing status to frozen.",
+    "Build twice and verify identical output_sha256."
+  ]
+}
