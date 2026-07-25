@@ -285,6 +285,10 @@ Every release commit carries an annotated `vX.Y.Z` tag, created by the
 |---|---|---|
 | `v0.1.0` | `8f9c942` | retroactive, approximate — see below |
 | `v0.1.1` | `6745f40` | created by `tag-release` |
+| `v0.1.2` | `3ed5f3c` | created by `tag-release` |
+
+A release's own commit cannot name its tag — the commit has to exist before
+`tag-release` can point at it — so this row always lands in the commit after.
 
 0.1.0 predates that job and is tagged retroactively at `8f9c942`. That tag is
 approximate by necessity and says so in its own message: `v11-core` and the
