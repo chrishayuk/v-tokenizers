@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "status": "frozen-pre-run",
+  "protocol": "../TOK2_DECISIVE_PROTOCOL.md",
+  "inputs": {
+    "c8_jsonl": "../corpus/c8_corpus_v3.jsonl",
+    "c8_sha256": "9eee14cd0b1b5b4f2d476d4fbde55c50a40b9aec09d204fd63cf1a036282e466",
+    "c3_jsonl": "../corpus/c3_v12_heldout.jsonl",
+    "c3_sha256": "52ab2ebb20b80585d56fe6f2ba292750b95c04eeef1af12673d6ad651710d08f",
+    "tokenizer_arms": "tok2_tokenizer_arms.json",
+    "tokenizer_archive": "tok2_tokenizer_archive_manifest.json",
+    "architecture_controls": "tok2_architecture_controls.json",
+    "paired_seeds": "tok2_paired_seeds.json",
+    "tiny_model_source": "../../../tiny-model/model/v11-core/src/tiny_model_v11/model.py",
+    "tiny_model_source_sha256": "7ea6bd0c15581fc14e93eab383508fb023c20ba1198e99f0c3fab9800b3bfc5e",
+    "tiny_model_repository_commit": "6cc4868fc0cd64f648844419532959d19c5e12ef"
+  },
+  "stream_schedule": {
+    "selection": "sort all complete C8 documents by sha256(order_seed, domain, text_sha256), then take the longest prefix whose next document would not exceed the nominal phase byte budget",
+    "phase_overlap": "phase 1 and phase 3 are independently ordered views of C8 and may overlap; every arm sees the exact same frozen view within a phase",
+    "phase1": {
+      "nominal_raw_byte_budget": 53727334,
+      "reference": "nearest integer to v11 historical 16M-token exposure divided by 0.2978 tokens/raw-byte",
+      "document_order_seed_field": "phase1_document_order_seed"
+    },
+    "phase3": {
+      "nominal_raw_byte_budget": 26863667,
+      "reference": "nearest integer to v11 historical 8M-token exposure divided by 0.2978 tokens/raw-byte",
+      "document_order_seed_field": "phase3_document_order_seed"
+    },
+    "evaluation": {
+      "selection": "all 200 frozen C3 documents sorted by sha256(evaluation_order_seed, domain, text_sha256)",
+      "document_order_seed_field": "evaluation_order_seed"
+    }
+  },
+  "optimization": {
+    "batch_size_sequences": 4,
+    "maximum_sequence_length": 256,
+    "precision": "float32",
+    "optimizer": "AdamW",
+    "adam_betas": [
+      0.9,
+      0.999
+    ],
+    "adam_epsilon": 1e-08,
+    "weight_decay": 0.01,
+    "gradient_clip_norm": 1.0,
+    "learning_rate_schedule": "linear warmup over first 2% of phase raw bytes, then cosine decay to 10% of phase peak LR; progress is cumulative complete-document UTF-8 bytes",
+    "phase1_peak_learning_rate": 0.0003,
+    "phase3_peak_learning_rate": 0.00015,
+    "warmup_fraction": 0.02,
+    "minimum_lr_fraction": 0.1,
+    "dropout": 0.0,
+    "phase3_transition": "reinitialize attention projection matrices from the paired phase3 seed; preserve learned embeddings, norms, and FFNs; freeze only all FFN matrices and each layer's FFN norm",
+    "no_phase1_elimination": true
+  },
+  "checkpoints": {
+    "phase_byte_fractions": [
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "evaluation_points": [
+      "phase1_25_percent_bytes",
+      "phase1_50_percent_bytes",
+      "phase1_75_percent_bytes",
+      "phase1_end",
+      "phase3_25_percent_bytes",
+      "phase3_50_percent_bytes",
+      "phase3_75_percent_bytes",
+      "phase3_end"
+    ],
+    "evaluation_time_accounting": "held-out evaluation time is recorded separately and excluded from training wall-clock interpolation",
+    "resume_must_restore": [
+      "model",
+      "optimizer",
+      "phase",
+      "stream_cursor",
+      "accounting",
+      "torch_rng_state",
+      "device_rng_state"
+    ]
+  },
+  "accounting": {
+    "required_per_checkpoint": [
+      "raw_bytes_consumed",
+      "documents_consumed",
+      "input_tokens_consumed",
+      "target_tokens_predicted",
+      "optimizer_steps",
+      "estimated_training_flops",
+      "wall_clock_seconds",
+      "peak_device_memory_bytes",
+      "peak_host_memory_bytes"
+    ],
+    "flop_estimate": "6 * phase_trainable_parameters * target_tokens_predicted",
+    "parameter_counts": [
+      "nominal_parameters",
+      "phase_trainable_parameters",
+      "actively_exercised_parameters"
+    ],
+    "active_row_rule": "embedding/output row is active if its token ID occurs in the phase stream; non-row trunk parameters are active when their module executes"
+  },
+  "statistics": {
+    "primary_endpoint": "phase3 held-out corpus BPB under fixed_total, averaged across paired run labels 0, 1, and 2",
+    "secondary_endpoint": "phase3 held-out corpus BPB under fixed_trunk",
+    "incumbent_arm": "v11_ws_exact",
+    "training_run_interval": "two-sided 90% Student-t interval over the three paired BPB differences, df=2, explicitly caveated",
+    "document_bootstrap": {
+      "seed": 20260728,
+      "replicates": 10000,
+      "interval": 0.9,
+      "label": "evaluation-set uncertainty only"
+    },
+    "unresolved_rule": "inconsistent paired-difference signs or an interval crossing zero is unresolved"
+  },
+  "execution": {
+    "matrix_cells": 48,
+    "allowed_devices": [
+      "cuda",
+      "mps",
+      "cpu"
+    ],
+    "default_output_root": "tok2_production_runs",
+    "launch_policy": "validate and register all cells before launch; this freeze operation must not start expensive training"
+  }
+}

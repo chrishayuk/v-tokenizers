@@ -1,0 +1,1293 @@
+{
+  "schema_version": 1,
+  "status": "frozen-validated-not-started",
+  "production_spec": "tok2_production_spec.json",
+  "production_spec_sha256": "63232562d28b81fb0f66ea026d6c4e3ea7b44c57801ee4ba69015788ea84ae43",
+  "inputs": {
+    "c8_sha256": "9eee14cd0b1b5b4f2d476d4fbde55c50a40b9aec09d204fd63cf1a036282e466",
+    "c8_rows": 266528,
+    "c3_sha256": "52ab2ebb20b80585d56fe6f2ba292750b95c04eeef1af12673d6ad651710d08f",
+    "c3_rows": 200,
+    "tiny_model_repository_commit": "6cc4868fc0cd64f648844419532959d19c5e12ef",
+    "source_manifest_sha256": {
+      "tokenizer_arms": "d70d80f8d8302e60bec4f74a9c7dc44259b1e56295aa9360924acb4727f8f58a",
+      "tokenizer_archive": "5e14097cc6f6b1dc1709c96d271cf2388a78b52badcb3687321bfe54faf8558a",
+      "architecture_controls": "b9dc9c229be77567cc52b8263b0fcf9ef6262b5264ae0e4443856cc37ad878e7",
+      "paired_seeds": "02c65e3d8238ae616d45b7e51001d75dc8fe1bdd5bf8fd5d5853b4dba7c3c80e",
+      "tiny_model_source": "7ea6bd0c15581fc14e93eab383508fb023c20ba1198e99f0c3fab9800b3bfc5e"
+    }
+  },
+  "tokenizers": {
+    "v11_ws_exact": {
+      "path": "v11/artifacts/tokenizer.json",
+      "sha256": "10dd51100331ab503115db23eee7e8dc3e360e3aed697c8a2e1b12b8f46031ae",
+      "vocab_rows": 71260,
+      "family": "v11",
+      "kind": "v11_ws_exact"
+    },
+    "U16_whitespace_split": {
+      "path": "v12/training/candidates/U16_whitespace_split_c8v3/tokenizer.json",
+      "sha256": "29e495842b519a812878e1dfe15159bfc71fc70ff26fd29373f1e1d0382f1c21",
+      "vocab_rows": 16000,
+      "family": "U16",
+      "kind": "hf_tokenizer",
+      "archive": {
+        "artifact_id": 712,
+        "uri": "gdrive://1NXxgqD8fticcyrOhVatIigQlEsI5I2hR",
+        "producing_run_id": "RUN-20260718-224711-00385"
+      }
+    },
+    "U16_digit_isolating": {
+      "path": "v12/training/candidates/U16_digit_isolating_c8v3/tokenizer.json",
+      "sha256": "aff90185030345f86c4c420857485e28b5bd9086be8b7c43889de209977a8554",
+      "vocab_rows": 16000,
+      "family": "U16",
+      "kind": "hf_tokenizer",
+      "archive": {
+        "artifact_id": 713,
+        "uri": "gdrive://1KHm0pmA49q7Jr5B4HoLHWHstiLW_XAUP",
+        "producing_run_id": "RUN-20260718-224711-00385"
+      }
+    },
+    "U16_code_aware": {
+      "path": "v12/training/candidates/U16_code_aware_c8v3/tokenizer.json",
+      "sha256": "aff3288bde696ccd440c99dc2e3475ad78edc5897c90be1a5b57e5ba84628f05",
+      "vocab_rows": 16000,
+      "family": "U16",
+      "kind": "hf_tokenizer",
+      "archive": {
+        "artifact_id": 714,
+        "uri": "gdrive://1mV1mNErDJ6Xie4LhlNkHwSoK7kOvb3Xz",
+        "producing_run_id": "RUN-20260718-224711-00385"
+      }
+    },
+    "B16_whitespace_split": {
+      "path": "v12/training/candidates/B16_whitespace_split_c8v3/tokenizer.json",
+      "sha256": "913935e56880919cd26723e0047c679f700f76998f9e6e97a404e24450f2fcb2",
+      "vocab_rows": 16000,
+      "family": "B16",
+      "kind": "hf_tokenizer",
+      "archive": {
+        "artifact_id": 715,
+        "uri": "gdrive://1aWjmt8l0J5fs2heHBsoTJbW6IOwrdNnn",
+        "producing_run_id": "RUN-20260718-224711-00385"
+      }
+    },
+    "B16_digit_isolating": {
+      "path": "v12/training/candidates/B16_digit_isolating_c8v3/tokenizer.json",
+      "sha256": "1bb8bef4fdd666ed0920cc6d89c4b2219b87140b75d5cef4561890c8d6b91291",
+      "vocab_rows": 16000,
+      "family": "B16",
+      "kind": "hf_tokenizer",
+      "archive": {
+        "artifact_id": 716,
+        "uri": "gdrive://1eUW3bA0Hl9mLa78Bg_8mQTb5RgdlyIRg",
+        "producing_run_id": "RUN-20260718-224711-00385"
+      }
+    },
+    "B16_code_aware": {
+      "path": "v12/training/candidates/B16_code_aware_c8v3/tokenizer.json",
+      "sha256": "b96b72a2d24cc31b70ed170cdbd1b021cabdc76d81dbf68cba7514980f6d50f6",
+      "vocab_rows": 16000,
+      "family": "B16",
+      "kind": "hf_tokenizer",
+      "archive": {
+        "artifact_id": 717,
+        "uri": "gdrive://1KipFTakV6eoL-xliNZe8m-Nlts5VyfK1",
+        "producing_run_id": "RUN-20260718-224711-00385"
+      }
+    },
+    "pure_byte": {
+      "path": "v12/training/candidates/pure_byte_v0/pure_byte_v0.vocab.json",
+      "sha256": "4c010ec9db8f1ab0c81deb2c5e76b9bc93a2e2c76943c3eadff7dd85f3d397d0",
+      "vocab_rows": 260,
+      "family": "byte",
+      "kind": "pure_byte"
+    }
+  },
+  "streams": {
+    "phase1": {
+      "order_seed": 20260725,
+      "nominal_raw_byte_budget": 53727334,
+      "actual_raw_bytes": 53727169,
+      "unused_budget_bytes": 165,
+      "documents": 216370,
+      "first_line_number": 1,
+      "last_line_number": 216370,
+      "ordered_stream_sha256": "ab7f57eb7f4ab141971f65a8c0c274953cf199c0c36f6dfc2cc0ca99c700dd71",
+      "domain_raw_bytes": {
+        "code": 7103531,
+        "json_tool_cell": 10265788,
+        "math_reasoning": 10087015,
+        "natural_prose": 23040179,
+        "noisy_unicode_mixed": 3230656
+      },
+      "domain_documents": {
+        "code": 990,
+        "json_tool_cell": 51174,
+        "math_reasoning": 137670,
+        "natural_prose": 25650,
+        "noisy_unicode_mixed": 886
+      },
+      "checkpoint_boundaries": [
+        {
+          "fraction": 0.25,
+          "documents": 53456,
+          "raw_bytes": 13432225,
+          "terminal_text_sha256": "3ac2336005bda45e3edafa6af7aae78249a962553a08dee505ad18e30a8cbaa3"
+        },
+        {
+          "fraction": 0.5,
+          "documents": 108623,
+          "raw_bytes": 26863688,
+          "terminal_text_sha256": "f866558e72d264a78ffca92d2338f30cae5b599d96d1eb717407f08e10de9af7"
+        },
+        {
+          "fraction": 0.75,
+          "documents": 163343,
+          "raw_bytes": 40296169,
+          "terminal_text_sha256": "3efa01dec2fb87e8a6a7fdceee7a5d80dd89032cd2a29aa9227a29be2f38516b"
+        },
+        {
+          "fraction": 1.0,
+          "documents": 216370,
+          "raw_bytes": 53727169,
+          "terminal_text_sha256": "5fdee40e70cd4d55058160a6f9861204641f2e9f281dc8365237f91fb0137157"
+        }
+      ]
+    },
+    "phase3": {
+      "order_seed": 20260726,
+      "nominal_raw_byte_budget": 26863667,
+      "actual_raw_bytes": 26861261,
+      "unused_budget_bytes": 2406,
+      "documents": 89645,
+      "first_line_number": 45641,
+      "last_line_number": 155142,
+      "ordered_stream_sha256": "fc783947be2560bd1d1bab8bce543b3ea1f52bca7d9a9f939a7460c93d884a6b",
+      "domain_raw_bytes": {
+        "code": 5484630,
+        "json_tool_cell": 4048422,
+        "math_reasoning": 4070738,
+        "natural_prose": 11917571,
+        "noisy_unicode_mixed": 1339900
+      },
+      "domain_documents": {
+        "code": 766,
+        "json_tool_cell": 20144,
+        "math_reasoning": 55066,
+        "natural_prose": 13316,
+        "noisy_unicode_mixed": 353
+      },
+      "checkpoint_boundaries": [
+        {
+          "fraction": 0.25,
+          "documents": 22035,
+          "raw_bytes": 6744789,
+          "terminal_text_sha256": "c752013370745a74c62adf53a6eeb6baad87d74c17a2dd4dc27050a1fa04e52c"
+        },
+        {
+          "fraction": 0.5,
+          "documents": 45187,
+          "raw_bytes": 13431114,
+          "terminal_text_sha256": "a40d46603b444ca7dae2223d1d8d62ef251fa816eb09398ccd0930aa5af8d6a0"
+        },
+        {
+          "fraction": 0.75,
+          "documents": 67427,
+          "raw_bytes": 20147525,
+          "terminal_text_sha256": "d7109e2805f5e35f1981d2a0aa5347731d06d2cebc3eba19924cedd1fac17852"
+        },
+        {
+          "fraction": 1.0,
+          "documents": 89645,
+          "raw_bytes": 26861261,
+          "terminal_text_sha256": "73ea97d2ed0246f07d1a913d341c9fb3a4142f7f1a18bdba94d231cf02bd6e17"
+        }
+      ]
+    },
+    "evaluation": {
+      "order_seed": 20260727,
+      "nominal_raw_byte_budget": null,
+      "actual_raw_bytes": 179983,
+      "unused_budget_bytes": null,
+      "documents": 200,
+      "first_line_number": 66,
+      "last_line_number": 166,
+      "ordered_stream_sha256": "4b4894bff591de4d1a4fd14575b74cdfab8d0efb01dcc9fc507b0780745df04a",
+      "domain_raw_bytes": {
+        "code": 35213,
+        "json_tool_cell": 7065,
+        "math_reasoning": 2842,
+        "natural_prose": 34597,
+        "noisy_unicode_mixed": 100266
+      },
+      "domain_documents": {
+        "code": 40,
+        "json_tool_cell": 40,
+        "math_reasoning": 40,
+        "natural_prose": 40,
+        "noisy_unicode_mixed": 40
+      }
+    }
+  },
+  "runs": [
+    {
+      "run_id": "tok2-fixed_trunk-v11_ws_exact-seed0",
+      "control": "fixed_trunk",
+      "arm_id": "v11_ws_exact",
+      "family": "v11",
+      "paired_run_label": 0,
+      "vocab_rows": 71260,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 115149312,
+        "phase1_trainable_parameters": 115149312,
+        "phase3_trainable_parameters": 52224512
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-v11_ws_exact-seed1",
+      "control": "fixed_trunk",
+      "arm_id": "v11_ws_exact",
+      "family": "v11",
+      "paired_run_label": 1,
+      "vocab_rows": 71260,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 115149312,
+        "phase1_trainable_parameters": 115149312,
+        "phase3_trainable_parameters": 52224512
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-v11_ws_exact-seed2",
+      "control": "fixed_trunk",
+      "arm_id": "v11_ws_exact",
+      "family": "v11",
+      "paired_run_label": 2,
+      "vocab_rows": 71260,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 115149312,
+        "phase1_trainable_parameters": 115149312,
+        "phase3_trainable_parameters": 52224512
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-U16_whitespace_split-seed0",
+      "control": "fixed_trunk",
+      "arm_id": "U16_whitespace_split",
+      "family": "U16",
+      "paired_run_label": 0,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-U16_whitespace_split-seed1",
+      "control": "fixed_trunk",
+      "arm_id": "U16_whitespace_split",
+      "family": "U16",
+      "paired_run_label": 1,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-U16_whitespace_split-seed2",
+      "control": "fixed_trunk",
+      "arm_id": "U16_whitespace_split",
+      "family": "U16",
+      "paired_run_label": 2,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-U16_digit_isolating-seed0",
+      "control": "fixed_trunk",
+      "arm_id": "U16_digit_isolating",
+      "family": "U16",
+      "paired_run_label": 0,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-U16_digit_isolating-seed1",
+      "control": "fixed_trunk",
+      "arm_id": "U16_digit_isolating",
+      "family": "U16",
+      "paired_run_label": 1,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-U16_digit_isolating-seed2",
+      "control": "fixed_trunk",
+      "arm_id": "U16_digit_isolating",
+      "family": "U16",
+      "paired_run_label": 2,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-U16_code_aware-seed0",
+      "control": "fixed_trunk",
+      "arm_id": "U16_code_aware",
+      "family": "U16",
+      "paired_run_label": 0,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-U16_code_aware-seed1",
+      "control": "fixed_trunk",
+      "arm_id": "U16_code_aware",
+      "family": "U16",
+      "paired_run_label": 1,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-U16_code_aware-seed2",
+      "control": "fixed_trunk",
+      "arm_id": "U16_code_aware",
+      "family": "U16",
+      "paired_run_label": 2,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-B16_whitespace_split-seed0",
+      "control": "fixed_trunk",
+      "arm_id": "B16_whitespace_split",
+      "family": "B16",
+      "paired_run_label": 0,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-B16_whitespace_split-seed1",
+      "control": "fixed_trunk",
+      "arm_id": "B16_whitespace_split",
+      "family": "B16",
+      "paired_run_label": 1,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-B16_whitespace_split-seed2",
+      "control": "fixed_trunk",
+      "arm_id": "B16_whitespace_split",
+      "family": "B16",
+      "paired_run_label": 2,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-B16_digit_isolating-seed0",
+      "control": "fixed_trunk",
+      "arm_id": "B16_digit_isolating",
+      "family": "B16",
+      "paired_run_label": 0,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-B16_digit_isolating-seed1",
+      "control": "fixed_trunk",
+      "arm_id": "B16_digit_isolating",
+      "family": "B16",
+      "paired_run_label": 1,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-B16_digit_isolating-seed2",
+      "control": "fixed_trunk",
+      "arm_id": "B16_digit_isolating",
+      "family": "B16",
+      "paired_run_label": 2,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-B16_code_aware-seed0",
+      "control": "fixed_trunk",
+      "arm_id": "B16_code_aware",
+      "family": "B16",
+      "paired_run_label": 0,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-B16_code_aware-seed1",
+      "control": "fixed_trunk",
+      "arm_id": "B16_code_aware",
+      "family": "B16",
+      "paired_run_label": 1,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-B16_code_aware-seed2",
+      "control": "fixed_trunk",
+      "arm_id": "B16_code_aware",
+      "family": "B16",
+      "paired_run_label": 2,
+      "vocab_rows": 16000,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 86856192,
+        "phase1_trainable_parameters": 86856192,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-pure_byte-seed0",
+      "control": "fixed_trunk",
+      "arm_id": "pure_byte",
+      "family": "byte",
+      "paired_run_label": 0,
+      "vocab_rows": 260,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 78797312,
+        "phase1_trainable_parameters": 78797312,
+        "phase3_trainable_parameters": 15872512
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-pure_byte-seed1",
+      "control": "fixed_trunk",
+      "arm_id": "pure_byte",
+      "family": "byte",
+      "paired_run_label": 1,
+      "vocab_rows": 260,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 78797312,
+        "phase1_trainable_parameters": 78797312,
+        "phase3_trainable_parameters": 15872512
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_trunk-pure_byte-seed2",
+      "control": "fixed_trunk",
+      "arm_id": "pure_byte",
+      "family": "byte",
+      "paired_run_label": 2,
+      "vocab_rows": 260,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 78797312,
+        "phase1_trainable_parameters": 78797312,
+        "phase3_trainable_parameters": 15872512
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-v11_ws_exact-seed0",
+      "control": "fixed_total",
+      "arm_id": "v11_ws_exact",
+      "family": "v11",
+      "paired_run_label": 0,
+      "vocab_rows": 71260,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 115149312,
+        "phase1_trainable_parameters": 115149312,
+        "phase3_trainable_parameters": 52224512
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-v11_ws_exact-seed1",
+      "control": "fixed_total",
+      "arm_id": "v11_ws_exact",
+      "family": "v11",
+      "paired_run_label": 1,
+      "vocab_rows": 71260,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 115149312,
+        "phase1_trainable_parameters": 115149312,
+        "phase3_trainable_parameters": 52224512
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-v11_ws_exact-seed2",
+      "control": "fixed_total",
+      "arm_id": "v11_ws_exact",
+      "family": "v11",
+      "paired_run_label": 2,
+      "vocab_rows": 71260,
+      "ffn_width": 2048,
+      "parameters": {
+        "nominal_parameters": 115149312,
+        "phase1_trainable_parameters": 115149312,
+        "phase3_trainable_parameters": 52224512
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-U16_whitespace_split-seed0",
+      "control": "fixed_total",
+      "arm_id": "U16_whitespace_split",
+      "family": "U16",
+      "paired_run_label": 0,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-U16_whitespace_split-seed1",
+      "control": "fixed_total",
+      "arm_id": "U16_whitespace_split",
+      "family": "U16",
+      "paired_run_label": 1,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-U16_whitespace_split-seed2",
+      "control": "fixed_total",
+      "arm_id": "U16_whitespace_split",
+      "family": "U16",
+      "paired_run_label": 2,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-U16_digit_isolating-seed0",
+      "control": "fixed_total",
+      "arm_id": "U16_digit_isolating",
+      "family": "U16",
+      "paired_run_label": 0,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-U16_digit_isolating-seed1",
+      "control": "fixed_total",
+      "arm_id": "U16_digit_isolating",
+      "family": "U16",
+      "paired_run_label": 1,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-U16_digit_isolating-seed2",
+      "control": "fixed_total",
+      "arm_id": "U16_digit_isolating",
+      "family": "U16",
+      "paired_run_label": 2,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-U16_code_aware-seed0",
+      "control": "fixed_total",
+      "arm_id": "U16_code_aware",
+      "family": "U16",
+      "paired_run_label": 0,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-U16_code_aware-seed1",
+      "control": "fixed_total",
+      "arm_id": "U16_code_aware",
+      "family": "U16",
+      "paired_run_label": 1,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-U16_code_aware-seed2",
+      "control": "fixed_total",
+      "arm_id": "U16_code_aware",
+      "family": "U16",
+      "paired_run_label": 2,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-B16_whitespace_split-seed0",
+      "control": "fixed_total",
+      "arm_id": "B16_whitespace_split",
+      "family": "B16",
+      "paired_run_label": 0,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-B16_whitespace_split-seed1",
+      "control": "fixed_total",
+      "arm_id": "B16_whitespace_split",
+      "family": "B16",
+      "paired_run_label": 1,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-B16_whitespace_split-seed2",
+      "control": "fixed_total",
+      "arm_id": "B16_whitespace_split",
+      "family": "B16",
+      "paired_run_label": 2,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-B16_digit_isolating-seed0",
+      "control": "fixed_total",
+      "arm_id": "B16_digit_isolating",
+      "family": "B16",
+      "paired_run_label": 0,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-B16_digit_isolating-seed1",
+      "control": "fixed_total",
+      "arm_id": "B16_digit_isolating",
+      "family": "B16",
+      "paired_run_label": 1,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-B16_digit_isolating-seed2",
+      "control": "fixed_total",
+      "arm_id": "B16_digit_isolating",
+      "family": "B16",
+      "paired_run_label": 2,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-B16_code_aware-seed0",
+      "control": "fixed_total",
+      "arm_id": "B16_code_aware",
+      "family": "B16",
+      "paired_run_label": 0,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-B16_code_aware-seed1",
+      "control": "fixed_total",
+      "arm_id": "B16_code_aware",
+      "family": "B16",
+      "paired_run_label": 1,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-B16_code_aware-seed2",
+      "control": "fixed_total",
+      "arm_id": "B16_code_aware",
+      "family": "B16",
+      "paired_run_label": 2,
+      "vocab_rows": 16000,
+      "ffn_width": 2968,
+      "parameters": {
+        "nominal_parameters": 115118592,
+        "phase1_trainable_parameters": 115118592,
+        "phase3_trainable_parameters": 23931392
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-pure_byte-seed0",
+      "control": "fixed_total",
+      "arm_id": "pure_byte",
+      "family": "byte",
+      "paired_run_label": 0,
+      "vocab_rows": 260,
+      "ffn_width": 3232,
+      "parameters": {
+        "nominal_parameters": 115169792,
+        "phase1_trainable_parameters": 115169792,
+        "phase3_trainable_parameters": 15872512
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607250,
+        "embedding_output_initialization_seed": 202608250,
+        "phase1_stochasticity_seed": 202609250,
+        "phase3_attention_reinitialization_seed": 202610250,
+        "phase3_stochasticity_seed": 202611250
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-pure_byte-seed1",
+      "control": "fixed_total",
+      "arm_id": "pure_byte",
+      "family": "byte",
+      "paired_run_label": 1,
+      "vocab_rows": 260,
+      "ffn_width": 3232,
+      "parameters": {
+        "nominal_parameters": 115169792,
+        "phase1_trainable_parameters": 115169792,
+        "phase3_trainable_parameters": 15872512
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607251,
+        "embedding_output_initialization_seed": 202608251,
+        "phase1_stochasticity_seed": 202609251,
+        "phase3_attention_reinitialization_seed": 202610251,
+        "phase3_stochasticity_seed": 202611251
+      },
+      "status": "registered-not-started"
+    },
+    {
+      "run_id": "tok2-fixed_total-pure_byte-seed2",
+      "control": "fixed_total",
+      "arm_id": "pure_byte",
+      "family": "byte",
+      "paired_run_label": 2,
+      "vocab_rows": 260,
+      "ffn_width": 3232,
+      "parameters": {
+        "nominal_parameters": 115169792,
+        "phase1_trainable_parameters": 115169792,
+        "phase3_trainable_parameters": 15872512
+      },
+      "seeds": {
+        "trunk_initialization_seed": 202607252,
+        "embedding_output_initialization_seed": 202608252,
+        "phase1_stochasticity_seed": 202609252,
+        "phase3_attention_reinitialization_seed": 202610252,
+        "phase3_stochasticity_seed": 202611252
+      },
+      "status": "registered-not-started"
+    }
+  ],
+  "launch_policy": "validate and register all cells before launch; this freeze operation must not start expensive training"
+}
