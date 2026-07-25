@@ -38,9 +38,25 @@ on:
         type: boolean
         default: true
       publish_hf:
-        description: "Publish to HuggingFace Hub"
+        description: "Publish the tokenizer to HuggingFace Hub"
         type: boolean
         default: true
+      publish_datasets:
+        description: "Publish the v11 corpus to HuggingFace Hub as a dataset repo"
+        type: boolean
+        default: true
+      hf_corpus_repo_id:
+        description: "HuggingFace DATASET repo id for the v11 gate corpus"
+        required: true
+        default: "chrishayuk/v11-corpus"
+      publish_wordnet:
+        description: "Also publish the WordNet lemma extraction (check the Princeton WordNet licence first -- off by default)"
+        type: boolean
+        default: false
+      hf_wordnet_repo_id:
+        description: "HuggingFace DATASET repo id for the WordNet lemma extraction"
+        required: false
+        default: "chrishayuk/v11-wordnet-lemmas"
 
 jobs:
   guard:
@@ -153,12 +169,115 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: install huggingface_hub
-        run: pip install --quiet "huggingface_hub>=0.24"
-      - name: push v11 tokenizer artifacts (replaces existing repo contents)
+      - name: install publish deps
+        run: pip install --quiet "huggingface_hub>=0.24" "transformers>=4.44" "tokenizers>=0.20" "pyyaml>=6"
+      # Goes through scripts/publish_tokenizer.py rather than a raw
+      # upload_folder, because the upload is the easy part. That script
+      # enforces the things that actually matter and that a plain push cannot:
+      # it refuses to overwrite a repo whose tokenizer.json hashes differently
+      # (immutability as a precondition, not a README promise), pins
+      # tokenizer_class so BOTH transformers 4.x and 5.x can load the result
+      # (5.x alone writes a config 4.x rejects outright), ships the dormant-block
+      # declaration and golden encodings, and re-loads the DOWNLOADED artifact
+      # to replay every golden vector before reporting success.
+      - name: publish the v11 tokenizer
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_REPO_ID: ${{ github.event.inputs.hf_repo_id }}
+        run: |
+          python3 scripts/publish_tokenizer.py \
+            --tokenizer-json v11/artifacts/tokenizer.json \
+            --repo-id "${{ github.event.inputs.hf_repo_id }}" \
+            --status adopted \
+            --source-commit "${{ github.sha }}" \
+            --dataset-name v11/tokenizer \
+            --dataset-version v1
+
+  # ---------------------------------------------------------------------------
+  # Datasets -> HuggingFace Hub (repo_type="dataset", not "model").
+  #
+  # Only the corpus is on by default. It is hand-written prose and code written
+  # for this repo, and it is the corpus the byte-safety round-trip gate is
+  # measured against -- publishing it is what makes "0 UNK, 32/32 pass" a claim
+  # anyone can re-run.
+  #
+  # The WordNet extraction is a separate, default-OFF toggle: it is derived from
+  # Princeton WordNet, which carries its own licence, and redistributing a
+  # derivative is a decision for a human rather than a workflow default.
+  # ---------------------------------------------------------------------------
+  publish-datasets:
+    needs: guard
+    if: ${{ github.event.inputs.publish_datasets == 'true' || github.event.inputs.publish_wordnet == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: install huggingface_hub
+        run: pip install --quiet "huggingface_hub>=0.24"
+
+      - name: push the v11 gate corpus
+        if: ${{ github.event.inputs.publish_datasets == 'true' }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO_ID: ${{ github.event.inputs.hf_corpus_repo_id }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, pathlib
+          from huggingface_hub import HfApi
+
+          root = pathlib.Path("v11/corpus")
+          files = sorted(p for p in root.rglob("*") if p.is_file())
+          card = f"""---
+          license: apache-2.0
+          language: [en]
+          tags: [tokenizer, evaluation, round-trip]
+          ---
+
+          # v11 tokenizer gate corpus
+
+          {len(files)} files of prose and source code, hand-assembled to exercise a
+          tokenizer where real text does: indentation, tabs, operators, Greek
+          letters, maths symbols, and non-ASCII characters.
+
+          This is the corpus the [v11 tokenizer](https://huggingface.co/chrishayuk/v11-tokenizer)
+          round-trip gate runs against. Current result: **0 UNK, 32/32 files
+          round-trip exactly**.
+
+          It exists because an earlier check against three samples of plain English
+          prose passed cleanly while the tokenizer was in fact dropping 662
+          characters on real input -- it never contained a tab. A gate corpus is
+          only worth what its hardest file is worth.
+
+          Registered in the chuk-datasets catalog as `v11/corpus`; its content
+          identity is verified against that catalog on every CI run.
+
+          ## Layout
+
+          ```
+          prose/   science, history, tech, geography
+          code/    c, go, java, javascript, python, rust, typescript
+          ```
+          """
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          repo_id = os.environ["HF_REPO_ID"]
+          api.create_repo(repo_id, repo_type="dataset", exist_ok=True)
+          pathlib.Path("README.md.corpus").write_text(card)
+          api.upload_file(path_or_fileobj="README.md.corpus", path_in_repo="README.md",
+                          repo_id=repo_id, repo_type="dataset")
+          api.upload_folder(
+              folder_path=str(root), path_in_repo="", repo_id=repo_id,
+              repo_type="dataset", delete_patterns=["prose/*", "code/*"],
+              commit_message="v11 gate corpus (0 UNK, 32/32 round-trip pass)",
+          )
+          print(f"pushed {len(files)} files to {repo_id}")
+          PYEOF
+
+      - name: push the WordNet lemma extraction
+        if: ${{ github.event.inputs.publish_wordnet == 'true' }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO_ID: ${{ github.event.inputs.hf_wordnet_repo_id }}
         run: |
           python3 - <<'PYEOF'
           import os
@@ -166,20 +285,12 @@ jobs:
 
           api = HfApi(token=os.environ["HF_TOKEN"])
           repo_id = os.environ["HF_REPO_ID"]
-          api.create_repo(repo_id, repo_type="model", exist_ok=True)
-          # delete_patterns="*" first: a genuine replace, not an overlay that
-          # leaves stale files from whatever was there before.
-          api.upload_folder(
-              folder_path="v11/artifacts",
-              repo_id=repo_id,
-              repo_type="model",
-              allow_patterns=[
-                  "tokenizer.json",
-                  "tokenizer_config.json",
-                  "special_tokens_map.json",
-                  "README.md",
-              ],
-              delete_patterns=["*"],
-              commit_message="v11: byte-safety fix (0 UNK, 0 round-trip mismatches on the 32-file gate corpus)",
+          api.create_repo(repo_id, repo_type="dataset", exist_ok=True)
+          api.upload_file(
+              path_or_fileobj="v11/data/wordnet_lemmas.json",
+              path_in_repo="wordnet_lemmas.json",
+              repo_id=repo_id, repo_type="dataset",
+              commit_message="WordNet lemmas filtered at min Zipf 2.5 (27,796 of 77,174)",
           )
+          print(f"pushed wordnet_lemmas.json to {repo_id}")
           PYEOF

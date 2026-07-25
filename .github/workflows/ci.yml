@@ -75,3 +75,32 @@ jobs:
       # not continue-on-error; see README.md "Status" for the fix history.
       - name: harness roundtrip
         run: python3 bench/tokenizer_bench.py roundtrip
+
+  datasets:
+    name: Dataset catalog in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The registration tool is generic and lives with the server that owns
+      # the identity algorithm, so there is exactly one implementation of it.
+      # Sparse public checkout: no token, no submodule, no vendored copy to
+      # drift.
+      - uses: actions/checkout@v4
+        with:
+          repository: chrishayuk/chuk-datasets-server
+          path: .chuk-datasets-server
+          sparse-checkout: jobs/register-files
+          sparse-checkout-cone-mode: false
+      - uses: astral-sh/setup-uv@v5
+      # Read-only and unauthenticated: reads are open on chuk-datasets, so CI
+      # needs no secret and a fork PR runs this identically. Recomputes each
+      # dataset's content_sha from the files on disk and fails if the catalog
+      # does not carry a version with that sha.
+      #
+      # This is what stops the round-trip gate above from drifting away from
+      # its own record: `harness roundtrip` measures v11/corpus, and this job
+      # proves the v11/corpus the catalog holds is the one it measured.
+      - name: verify datasets match the catalog
+        run: >
+          uv run .chuk-datasets-server/jobs/register-files/register.py
+          verify datasets.json
