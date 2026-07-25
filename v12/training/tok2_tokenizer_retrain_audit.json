@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "audit_id": "tok2-structural-tokenizer-retrain-20260725",
+  "status": "mixed-reproducibility-runtime-artifacts-remain-valid",
+  "corpus_sha256": "9eee14cd0b1b5b4f2d476d4fbde55c50a40b9aec09d204fd63cf1a036282e466",
+  "implementation": {
+    "library": "tokenizers",
+    "version": "0.22.2",
+    "unigram_seed_parameter_available": false
+  },
+  "method": "independently retrain each arm from the same frozen C8 v3 bytes and configuration into a separate temporary directory, then compare tokenizer.json SHA-256",
+  "results": [
+    {
+      "arm": "U16_whitespace_split",
+      "family": "U16",
+      "frozen_sha256": "29e495842b519a812878e1dfe15159bfc71fc70ff26fd29373f1e1d0382f1c21",
+      "retrained_sha256": "28abae52f08f7e3f238de0788f82049b56b0f2a17f75374b43edb12a041ce647",
+      "byte_identical": false,
+      "runtime_vocab_rows": 16000
+    },
+    {
+      "arm": "U16_digit_isolating",
+      "family": "U16",
+      "frozen_sha256": "aff90185030345f86c4c420857485e28b5bd9086be8b7c43889de209977a8554",
+      "retrained_sha256": "5b91b8ef8ef28dc1799cb6de2b47b188d431a74bad8d75b10d209bec4ab7f2ca",
+      "byte_identical": false,
+      "runtime_vocab_rows": 16000
+    },
+    {
+      "arm": "U16_code_aware",
+      "family": "U16",
+      "frozen_sha256": "aff3288bde696ccd440c99dc2e3475ad78edc5897c90be1a5b57e5ba84628f05",
+      "retrained_sha256": "2ec0be87c36583d142ca52639e4b96122e57a26eb8ee02e2904addbb4e845a5b",
+      "byte_identical": false,
+      "runtime_vocab_rows": 16000
+    },
+    {
+      "arm": "B16_whitespace_split",
+      "family": "B16",
+      "frozen_sha256": "913935e56880919cd26723e0047c679f700f76998f9e6e97a404e24450f2fcb2",
+      "retrained_sha256": "913935e56880919cd26723e0047c679f700f76998f9e6e97a404e24450f2fcb2",
+      "byte_identical": true,
+      "runtime_vocab_rows": 16000
+    },
+    {
+      "arm": "B16_digit_isolating",
+      "family": "B16",
+      "frozen_sha256": "1bb8bef4fdd666ed0920cc6d89c4b2219b87140b75d5cef4561890c8d6b91291",
+      "retrained_sha256": "1bb8bef4fdd666ed0920cc6d89c4b2219b87140b75d5cef4561890c8d6b91291",
+      "byte_identical": true,
+      "runtime_vocab_rows": 16000
+    },
+    {
+      "arm": "B16_code_aware",
+      "family": "B16",
+      "frozen_sha256": "b96b72a2d24cc31b70ed170cdbd1b021cabdc76d81dbf68cba7514980f6d50f6",
+      "retrained_sha256": "b96b72a2d24cc31b70ed170cdbd1b021cabdc76d81dbf68cba7514980f6d50f6",
+      "byte_identical": true,
+      "runtime_vocab_rows": 16000
+    }
+  ],
+  "parallelism_control_probe": {
+    "TOKENIZERS_PARALLELISM": "false",
+    "outcome": "terminated after more than three minutes without completing the first Unigram artifact; not adopted as an implicit reproducibility contract"
+  },
+  "conclusion": [
+    "B16 training was byte-reproducible in this independent audit.",
+    "U16 training is stochastic under the exposed tokenizers 0.22.2 API and cannot be made byte-reproducible by a pinned seed.",
+    "This does not invalidate a hash-pinned U16 runtime artifact, but each frozen artifact must be archived before production model runs.",
+    "A future tokenizer-training implementation with explicit RNG control is desirable; it must create a new artifact revision rather than silently replacing these arms."
+  ]
+}

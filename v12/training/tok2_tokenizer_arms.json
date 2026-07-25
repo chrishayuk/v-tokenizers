@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "status": "frozen-for-rehearsal-pending-external-archive",
+  "corpus_sha256": "9eee14cd0b1b5b4f2d476d4fbde55c50a40b9aec09d204fd63cf1a036282e466",
+  "training_reproducibility": {
+    "audit": "tok2_tokenizer_retrain_audit.json",
+    "implementation_version": "tokenizers 0.22.2",
+    "B16": "all three independent retrains were byte-identical to the frozen artifacts",
+    "U16": "UnigramTrainer exposes no RNG seed; all three independent retrains differed from the frozen artifacts while retaining exactly 16,000 runtime rows",
+    "artifact_policy": "the pinned runtime artifact SHA-256 is authoritative; archive all six ignored artifacts before production model runs"
+  },
+  "arms": [
+    {
+      "id": "v11_ws_exact",
+      "family": "v11",
+      "kind": "v11_ws_exact",
+      "artifact": "../../v11/artifacts/tokenizer.json",
+      "artifact_sha256": "10dd51100331ab503115db23eee7e8dc3e360e3aed697c8a2e1b12b8f46031ae",
+      "vocab_rows": 71260,
+      "pre_tokenization": "canonical_v11_metaspace_with_whitespace_exact_adapter"
+    },
+    {
+      "id": "U16_whitespace_split",
+      "family": "U16",
+      "kind": "hf_tokenizer",
+      "artifact": "candidates/U16_whitespace_split_c8v3/tokenizer.json",
+      "artifact_sha256": "29e495842b519a812878e1dfe15159bfc71fc70ff26fd29373f1e1d0382f1c21",
+      "vocab_rows": 16000,
+      "pre_tokenization": "whitespace_split",
+      "training_reproducibility": "trainer has no seed control; immutable runtime artifact hash is authoritative"
+    },
+    {
+      "id": "U16_digit_isolating",
+      "family": "U16",
+      "kind": "hf_tokenizer",
+      "artifact": "candidates/U16_digit_isolating_c8v3/tokenizer.json",
+      "artifact_sha256": "aff90185030345f86c4c420857485e28b5bd9086be8b7c43889de209977a8554",
+      "vocab_rows": 16000,
+      "pre_tokenization": "digit_isolating",
+      "training_reproducibility": "trainer has no seed control; immutable runtime artifact hash is authoritative"
+    },
+    {
+      "id": "U16_code_aware",
+      "family": "U16",
+      "kind": "hf_tokenizer",
+      "artifact": "candidates/U16_code_aware_c8v3/tokenizer.json",
+      "artifact_sha256": "aff3288bde696ccd440c99dc2e3475ad78edc5897c90be1a5b57e5ba84628f05",
+      "vocab_rows": 16000,
+      "pre_tokenization": "code_aware",
+      "training_reproducibility": "trainer has no seed control; immutable runtime artifact hash is authoritative"
+    },
+    {
+      "id": "B16_whitespace_split",
+      "family": "B16",
+      "kind": "hf_tokenizer",
+      "artifact": "candidates/B16_whitespace_split_c8v3/tokenizer.json",
+      "artifact_sha256": "913935e56880919cd26723e0047c679f700f76998f9e6e97a404e24450f2fcb2",
+      "vocab_rows": 16000,
+      "pre_tokenization": "whitespace_split"
+    },
+    {
+      "id": "B16_digit_isolating",
+      "family": "B16",
+      "kind": "hf_tokenizer",
+      "artifact": "candidates/B16_digit_isolating_c8v3/tokenizer.json",
+      "artifact_sha256": "1bb8bef4fdd666ed0920cc6d89c4b2219b87140b75d5cef4561890c8d6b91291",
+      "vocab_rows": 16000,
+      "pre_tokenization": "digit_isolating"
+    },
+    {
+      "id": "B16_code_aware",
+      "family": "B16",
+      "kind": "hf_tokenizer",
+      "artifact": "candidates/B16_code_aware_c8v3/tokenizer.json",
+      "artifact_sha256": "b96b72a2d24cc31b70ed170cdbd1b021cabdc76d81dbf68cba7514980f6d50f6",
+      "vocab_rows": 16000,
+      "pre_tokenization": "code_aware"
+    },
+    {
+      "id": "pure_byte",
+      "family": "byte",
+      "kind": "pure_byte",
+      "artifact": "candidates/pure_byte_v0/pure_byte_v0.vocab.json",
+      "artifact_sha256": "4c010ec9db8f1ab0c81deb2c5e76b9bc93a2e2c76943c3eadff7dd85f3d397d0",
+      "vocab_rows": 260,
+      "pre_tokenization": "utf8_bytes"
+    }
+  ]
+}
