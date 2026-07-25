@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "source_pool_id": "c8-v3-non-code-sources",
+  "status": "frozen",
+  "seed": 20260725,
+  "raw_sources": [
+    {
+      "id": "tinystories-train-shard-0",
+      "path": "c8_v3_raw/tinystories-train-00000-of-00004.arrow",
+      "local_candidates": [
+        "../../../../.cache/huggingface/datasets/roneneldan___tiny_stories/default/0.0.0/f54c09fd23315a6f9c86f9dc80f725de7d8f9c64/tiny_stories-train-00000-of-00004.arrow"
+      ],
+      "dataset": "roneneldan/TinyStories",
+      "revision": "f54c09fd23315a6f9c86f9dc80f725de7d8f9c64",
+      "sha256": "664d3c433e7503e49ce379ba430caf41f777efd1464ddd6e8535a5f99cf30c61",
+      "license_classification": "CDLA-Sharing-1.0",
+      "role": "natural prose"
+    },
+    {
+      "id": "fineweb-10bt-shard-0",
+      "path": "c8_v3_raw/fineweb-train-00000-of-00100.arrow",
+      "local_candidates": [
+        "../../../../.cache/huggingface/datasets/HuggingFaceFW___fineweb/sample-10BT/0.0.0/29be36a2e035737f9b2d7e4f0847413ff7b2994b/fineweb-train-00000-of-00100.arrow"
+      ],
+      "dataset": "HuggingFaceFW/fineweb",
+      "config": "sample-10BT",
+      "revision": "29be36a2e035737f9b2d7e4f0847413ff7b2994b",
+      "sha256": "a525f6aa4c0004ab48d2219c5bdce04078561454b82dca5185a54d053582707e",
+      "license_classification": "ODC-By-1.0",
+      "role": "naturally occurring non-ASCII, multiline, mixed web text"
+    },
+    {
+      "id": "cell80-cn7",
+      "path": "../../../cell80/experiments/cell-native-architectures/artifacts/datasets/cn7_corpus_train.jsonl",
+      "repository": "https://github.com/chrishayuk/cell80.git",
+      "repository_revision": "f7ff045ac7770bd7ad63e1910600284a4ea0dfed",
+      "sha256": "4e146e6de2223a771f584c5ebfe0beec05fd6c9709378849b7cfc24d4472712c",
+      "license_classification": "project-owned generated experiment artifact",
+      "role": "Cell80 interpolation and call-frame data"
+    },
+    {
+      "id": "cell80-cn8-b",
+      "path": "../../../cell80/experiments/cell-native-architectures/artifacts/datasets/cn8_corpus_b.jsonl",
+      "repository": "https://github.com/chrishayuk/cell80.git",
+      "repository_revision": "f7ff045ac7770bd7ad63e1910600284a4ea0dfed",
+      "sha256": "f582eb612468ee591c02df8a0c475a253a38e0397fc71c34b1c847494873a8d9",
+      "license_classification": "project-owned generated experiment artifact",
+      "role": "Cell80 arithmetic traces"
+    },
+    {
+      "id": "cell80-cn8-atok",
+      "path": "../../../cell80/experiments/cell-native-architectures/artifacts/datasets/cn8_corpus_atok.jsonl",
+      "repository": "https://github.com/chrishayuk/cell80.git",
+      "repository_revision": "f7ff045ac7770bd7ad63e1910600284a4ea0dfed",
+      "sha256": "6d1401f6d4e161e3401eb482a1bb78ed1723b24513a663b6c8a9505339a36206",
+      "license_classification": "project-owned generated experiment artifact",
+      "role": "Cell80 compact arithmetic text"
+    },
+    {
+      "id": "cell80-cn8-aex",
+      "path": "../../../cell80/experiments/cell-native-architectures/artifacts/datasets/cn8_corpus_aex.jsonl",
+      "repository": "https://github.com/chrishayuk/cell80.git",
+      "repository_revision": "f7ff045ac7770bd7ad63e1910600284a4ea0dfed",
+      "sha256": "a7a52b74b0f836a4170fdb77ce4888f1b776808f822de858eb60aac4b604bef2",
+      "license_classification": "project-owned generated experiment artifact",
+      "role": "Cell80 arithmetic explanations"
+    }
+  ],
+  "domains": {
+    "natural_prose": {
+      "pool_bytes": 54000000,
+      "output_path": "c8_v3_sources/natural_prose.jsonl",
+      "expected_output": {
+        "sha256": "1221f54706d67a5a3f130f41fec4a31a60a781b403a3240d2da865d1b8ee1b51",
+        "rows": 60067,
+        "text_bytes": 54000364,
+        "unique_text_rows": 60067
+      },
+      "strata": [
+        {
+          "source_id": "tinystories-train-shard-0",
+          "extractor": "tinystories_text",
+          "pool_bytes": 54000000
+        }
+      ]
+    },
+    "math_reasoning": {
+      "pool_bytes": 24000000,
+      "output_path": "c8_v3_sources/math_reasoning.jsonl",
+      "expected_output": {
+        "sha256": "ddefc41e79ecafa206f1e9d33d65e12834747b606795dfa5e3c6321e33e29972",
+        "rows": 321915,
+        "text_bytes": 24000125,
+        "unique_text_rows": 321915
+      },
+      "strata": [
+        {
+          "source_id": "cell80-cn7",
+          "extractor": "cell80_math_text",
+          "pool_bytes": 15500000
+        },
+        {
+          "source_id": "cell80-cn8-b",
+          "extractor": "cell80_math_text",
+          "pool_bytes": 6000000
+        },
+        {
+          "source_id": "cell80-cn8-atok",
+          "extractor": "cell80_math_text",
+          "pool_bytes": 3900000
+        },
+        {
+          "source_id": "cell80-cn8-aex",
+          "extractor": "cell80_math_text",
+          "pool_bytes": 700000
+        }
+      ]
+    },
+    "json_tool_cell": {
+      "pool_bytes": 24000000,
+      "output_path": "c8_v3_sources/json_tool_cell.jsonl",
+      "expected_output": {
+        "sha256": "a3dec04557a7550428b12359654d9ae460e2f65802e7111e8f9a0d752950fd26",
+        "rows": 119477,
+        "text_bytes": 24000051,
+        "unique_text_rows": 119477
+      },
+      "strata": [
+        {
+          "source_id": "cell80-cn7",
+          "extractor": "cell80_structured_json",
+          "pool_bytes": 6000000
+        },
+        {
+          "source_id": "cell80-cn8-b",
+          "extractor": "cell80_structured_json",
+          "pool_bytes": 6000000
+        },
+        {
+          "source_id": "cell80-cn8-atok",
+          "extractor": "cell80_structured_json",
+          "pool_bytes": 6000000
+        },
+        {
+          "source_id": "cell80-cn8-aex",
+          "extractor": "cell80_structured_json",
+          "pool_bytes": 6000000
+        }
+      ]
+    },
+    "noisy_unicode_mixed": {
+      "pool_bytes": 8000000,
+      "output_path": "c8_v3_sources/noisy_unicode_mixed.jsonl",
+      "expected_output": {
+        "sha256": "6e4919cabf020b73150d325210e68b28c88e01d6ddb4cda46bd1241831edf071",
+        "rows": 2108,
+        "text_bytes": 8000345,
+        "unique_text_rows": 2108
+      },
+      "strata": [
+        {
+          "source_id": "fineweb-10bt-shard-0",
+          "extractor": "fineweb_natural_unicode",
+          "pool_bytes": 8000000
+        }
+      ]
+    }
+  }
+}
