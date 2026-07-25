@@ -24,8 +24,12 @@ on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: 'Type "publish" to confirm you mean to actually publish v11'
-        required: true
+        description: 'Type "publish" to confirm you mean to actually publish v11 (not needed for a dry run)'
+        required: false
+      dry_run:
+        description: "Rehearse: build and package everything, upload nothing, tag nothing"
+        type: boolean
+        default: false
       hf_repo_id:
         description: "HuggingFace repo id to push the tokenizer to (replaces its contents)"
         required: true
@@ -63,11 +67,21 @@ jobs:
   guard:
     runs-on: ubuntu-latest
     steps:
+      # A dry run uploads nothing, so demanding the confirmation word for one
+      # would only train people to type it without reading it.
       - name: require explicit confirmation
-        if: ${{ github.event.inputs.confirm != 'publish' }}
+        if: ${{ github.event.inputs.dry_run != 'true' && github.event.inputs.confirm != 'publish' }}
         run: |
           echo "Confirmation input did not match 'publish' -- stopping without publishing anything."
+          echo "(Dispatch with dry_run=true to rehearse without typing it.)"
           exit 1
+      - name: say which mode this is
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "::notice::DRY RUN -- everything builds and packages, nothing uploads, nothing is tagged"
+          else
+            echo "::notice::LIVE RUN -- this publishes"
+          fi
 
   # Ordering matters: v11-builder/v11-cli/v11-python all depend on v11-core
   # with both a path and a version (needed so `cargo publish` works at all --
@@ -85,7 +99,52 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+
+      # Rehearsal. Deliberately two different strengths of check, because the
+      # stronger one is not available for every crate before a real publish:
+      #
+      #   v11-core          full `cargo publish --dry-run` -- packages AND
+      #                     builds the packaged crate. It has no internal deps,
+      #                     so this always works.
+      #   builder/cli       `cargo package --no-verify` only. Their full
+      #                     verification builds the packaged crate against the
+      #                     REGISTRY copy of v11-core at the new version, which
+      #                     by definition is not on the index yet during a
+      #                     rehearsal -- `cargo publish --dry-run -p v11-cli`
+      #                     fails with "failed to select a version for the
+      #                     requirement v11-core = ^X" and that failure says
+      #                     nothing about the crate. Packaging still catches
+      #                     what this stage is for: bad metadata, missing
+      #                     include/exclude, a manifest that will not upload.
+      #                     That they compile is already proven by CI's
+      #                     `cargo build --workspace`.
+      - name: dry run -- package all three, fully verify what can be verified
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: |
+          set -euo pipefail
+          VERSION=$(grep -m1 '^version = ' Cargo.toml | sed -E 's/.*"(.*)".*/\1/')
+          echo "would publish version ${VERSION}"
+
+          echo "::group::v11-core (full dry run: package + build)"
+          cargo publish -p v11-core --dry-run
+          # `cargo publish --dry-run` deletes its own archive on the way out,
+          # so re-package to leave an inspectable .crate like the other two.
+          cargo package -p v11-core --no-verify
+          echo "::endgroup::"
+
+          for name in v11-builder v11-cli; do
+            echo "::group::${name} (package only -- see the comment in publish.yml)"
+            cargo package -p "$name" --no-verify
+            echo "::endgroup::"
+          done
+
+          echo "packaged, nothing uploaded:"
+          ls -la target/package/*.crate
+          test "$(ls target/package/*.crate | wc -l)" -eq 3 \
+            || { echo "::error::expected 3 .crate files"; exit 1; }
+
       - name: publish v11-core, v11-builder, v11-cli (in order, idempotent)
+        if: ${{ github.event.inputs.dry_run != 'true' }}
         # Sparse-index paths are NOT /v1/crates/{name} (that's the separate
         # crates.io web API) -- they're derived from name length: 1 char ->
         # 1/{name}, 2 char -> 2/{name}, 3 char -> 3/{first-char}/{name}, 4+
@@ -191,8 +250,10 @@ jobs:
         include:
           - runner: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            manylinux_image: quay.io/pypa/manylinux2014_x86_64
           - runner: ubuntu-latest
             target: aarch64-unknown-linux-gnu
+            manylinux_image: quay.io/pypa/manylinux2014_aarch64
           - runner: macos-latest
             target: x86_64-apple-darwin
           - runner: macos-latest
@@ -213,10 +274,56 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      # The Linux legs build inside a manylinux container that maturin-action
+      # pulls itself, with no retry. A quay.io timeout ("context deadline
+      # exceeded") failed the x86_64 leg mid-release on 2026-07-25 and, because
+      # tag-release requires that no job failed, silently cost the release its
+      # tag -- a registry blip presenting as a failed release. Pre-pulling with
+      # backoff means the action's own pull hits the local cache.
+      #
+      # If maturin-action ever changes its default image this pre-pull simply
+      # warms an image nobody uses: wasted seconds, not a regression, and the
+      # unretried pull behaves exactly as it does today.
+      - name: pre-pull the manylinux image (retry on transient registry failure)
+        if: ${{ matrix.manylinux_image != '' }}
+        run: |
+          set -euo pipefail
+          image="${{ matrix.manylinux_image }}:latest"
+          for i in 1 2 3 4 5; do
+            if docker pull "$image"; then
+              echo "pulled $image on attempt $i"
+              exit 0
+            fi
+            wait=$((i * 15))
+            echo "pull failed (attempt $i/5), retrying in ${wait}s..."
+            sleep "$wait"
+          done
+          echo "::error::could not pull $image after 5 attempts -- registry looks genuinely down"
+          exit 1
+
+      # Rehearsal: build every wheel, upload none. This is the check that would
+      # have caught 0.1.0's PyO3-vs-Python-3.14 mismatch before it consumed a
+      # release, and it is the only way to exercise all five targets without
+      # spending a version number.
+      - name: dry run -- build the wheel, upload nothing
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          target: ${{ matrix.target }}
+          manylinux: auto
+          args: --release -m v11/python/Cargo.toml
+      - name: dry run -- show what was built
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        shell: bash
+        run: ls -la target/wheels/ || ls -la v11/python/target/wheels/
+
       # --skip-existing is what makes the whole matrix redispatchable: every
       # leg also emits an identical sdist, and the first one to land wins
       # instead of the other four failing on "file already exists".
       - uses: PyO3/maturin-action@v1
+        if: ${{ github.event.inputs.dry_run != 'true' }}
         with:
           command: publish
           target: ${{ matrix.target }}
@@ -256,7 +363,8 @@ jobs:
             --status adopted \
             --source-commit "${{ github.sha }}" \
             --dataset-name v11/tokenizer \
-            --dataset-version v1
+            --dataset-version v1 \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
 
   # ---------------------------------------------------------------------------
   # Datasets -> HuggingFace Hub (repo_type="dataset", not "model").
@@ -303,7 +411,8 @@ jobs:
             --root v11/corpus \
             --repo-id "${{ github.event.inputs.hf_corpus_repo_id }}" \
             --card scripts/cards/v11-corpus.md \
-            --commit-message "v11 gate corpus (0 UNK, 32/32 round-trip pass)"
+            --commit-message "v11 gate corpus (0 UNK, 32/32 round-trip pass)" \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
 
       # --allow-extra: this repo is a single file rather than a mirrored tree,
       # so anything else already in it is not evidence of a partial upload.
@@ -316,7 +425,8 @@ jobs:
             --root v11/data/wordnet_lemmas.json \
             --repo-id "${{ github.event.inputs.hf_wordnet_repo_id }}" \
             --allow-extra \
-            --commit-message "WordNet lemmas filtered at min Zipf 2.5 (27,796 of 77,174)"
+            --commit-message "WordNet lemmas filtered at min Zipf 2.5 (27,796 of 77,174)" \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
 
   # ---------------------------------------------------------------------------
   # Tag the commit that was actually released.
@@ -336,6 +446,7 @@ jobs:
     needs: [guard, publish-crates, publish-pypi, publish-hf, publish-datasets]
     if: >-
       ${{ always()
+          && github.event.inputs.dry_run != 'true'
           && needs.guard.result == 'success'
           && !contains(needs.*.result, 'failure')
           && !contains(needs.*.result, 'cancelled') }}

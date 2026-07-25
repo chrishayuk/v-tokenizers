@@ -156,22 +156,41 @@ vectors against the downloaded artifact, and the dataset push (as of
 resulting revision and sha256-compares it against the working tree. No step
 still reports success purely on the strength of an accepted request.
 
-Open, in rough priority order:
+**The whole pipeline rehearses.** `workflow_dispatch` takes `dry_run`, which
+builds and packages every destination and uploads nothing: all three crates
+packaged, all five wheels built, and both HF pushes staged through their
+scripts' own `--dry-run`. Nothing is tagged. It needs no confirmation word,
+since it cannot publish. This is the check that would have caught 0.1.0's
+PyO3-vs-Python-3.14 mismatch without spending a version number.
 
-- **The manylinux legs depend on `quay.io` being reachable.** A `docker pull`
-  of `quay.io/pypa/manylinux2014_*` timed out mid-release (2026-07-25,
-  "context deadline exceeded"), failing that leg and — because `tag-release`
-  requires no job to have failed — skipping tagging. Harmless in effect: the
-  whole pipeline is idempotent, so a re-dispatch skips everything already
-  published and completes the tag. But it means a red release run is not
-  automatically a real problem, which is exactly the ambiguity the assertions
-  above exist to remove. Worth a retry on the pull rather than living with it.
-- **No dry-run mode for crates or wheels.** Every rehearsal of a publish change
-  there is a real publish; both bugs above were found *after* shipping, and
-  crates.io versions cannot be deleted, only yanked. The two HF surfaces do
-  have one — `publish_tokenizer.py --dry-run` and `publish_dataset.py
-  --dry-run`, plus `publish_dataset.py --verify-only` to audit a live dataset
-  repo against the working tree without uploading anything.
+One asymmetry worth knowing, because the output says so too: `v11-core` gets a
+full `cargo publish --dry-run` (packaged *and* built), while `v11-builder` and
+`v11-cli` are only packaged. Their full verification builds the packaged crate
+against the **registry** copy of `v11-core` at the new version, which by
+definition is not on the index during a rehearsal — attempting it fails with
+`failed to select a version for the requirement v11-core = ^X`, which says
+nothing about the crate. That they compile is already proven by CI's
+`cargo build --workspace`.
+
+`publish_dataset.py --verify-only` additionally audits a live dataset repo
+against the working tree at any time, no token required.
+
+Open:
+
+- **Transient registry failures still read as release failures.** The
+  manylinux legs pull `quay.io/pypa/manylinux2014_*`, which timed out
+  mid-release (2026-07-25, "context deadline exceeded") and — because
+  `tag-release` requires no job to have failed — silently cost that release
+  its tag. The image is now pre-pulled with five attempts and backoff before
+  maturin-action runs, so a blip has to persist for over two minutes to fail
+  a leg. That narrows the window rather than closing it: the underlying
+  coupling, where any red job blocks tagging, is still there by design.
+- **`cargo publish` is not transactional across crates.** Publishing three
+  crates in dependency order means a failure partway leaves the registry with
+  some versions live and some not. It is recoverable — the job is idempotent
+  and a re-dispatch finishes the job, which is exactly what happened on
+  2026-07-24 — but "0.1.0" briefly meant different things on different
+  crates, and no mechanism prevents that.
 
 ## Not on the roadmap
 

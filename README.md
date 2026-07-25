@@ -254,7 +254,15 @@ exists.
    `[workspace.dependencies].v11-core`, and in `v11/python/Cargo.toml` +
    `v11/python/pyproject.toml` (workspace-excluded, so it carries its own).
 2. `cargo test --workspace && cargo clippy --all-targets -- -D warnings`.
-3. Dispatch **Release (manual)**, typing `publish` to confirm:
+3. Rehearse it first. `dry_run` builds and packages every destination and
+   uploads nothing — three crates packaged, five wheels built, both HF pushes
+   staged — and tags nothing. No confirmation word, because it cannot publish:
+
+   ```sh
+   gh workflow run publish.yml -f dry_run=true
+   ```
+
+4. Dispatch **Release (manual)** for real, typing `publish` to confirm:
 
    ```sh
    gh workflow run publish.yml -f confirm=publish \
@@ -266,8 +274,9 @@ exists.
    (crates skip if already on the sparse index, `maturin publish` uses
    `--skip-existing`, the tokenizer push refuses to overwrite a differing
    hash), so redispatching after a partial failure is safe and expected.
-4. The `tag-release` job pushes `vX.Y.Z`. It refuses to move a tag that
-   already points somewhere else -- bump the version instead.
+5. The `tag-release` job pushes `vX.Y.Z`. It refuses to move a tag that
+   already points somewhere else -- bump the version instead. It does not run
+   on a dry run.
 
 ## Consuming from tiny-model
 
