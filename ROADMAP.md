@@ -149,13 +149,15 @@ run's own verdict.**
 | 0.1.0 | Sparse-index path used the web-API shape, so a genuinely successful publish looked like a failure | Correct path derivation, documented in the job |
 | 0.1.1 | Skip guard asked whether the crate existed on the index at all — true forever after the first version — so it published nothing and passed | Per-version check, plus an assertion that all three versions are actually on the index |
 
+Every publishing surface now proves its own outcome: crates asserts each
+version is really on the sparse index, the tokenizer push replays golden
+vectors against the downloaded artifact, and the dataset push (as of
+2026-07-25, `scripts/publish_dataset.py`) downloads every file back at the
+resulting revision and sha256-compares it against the working tree. No step
+still reports success purely on the strength of an accepted request.
+
 Open, in rough priority order:
 
-- **`publish-datasets` and `publish-hf` have no equivalent assertion.** The
-  crates job now proves its own outcome; the tokenizer push does too, via
-  golden-vector replay against the downloaded artifact. The dataset push is
-  still a bare `upload_folder` that reports success without verifying what
-  landed. It is the last "trust the run" step in the pipeline.
 - **The manylinux legs depend on `quay.io` being reachable.** A `docker pull`
   of `quay.io/pypa/manylinux2014_*` timed out mid-release (2026-07-25,
   "context deadline exceeded"), failing that leg and — because `tag-release`
@@ -164,9 +166,12 @@ Open, in rough priority order:
   published and completes the tag. But it means a red release run is not
   automatically a real problem, which is exactly the ambiguity the assertions
   above exist to remove. Worth a retry on the pull rather than living with it.
-- **No dry-run mode.** Every rehearsal of a publish change is a real publish.
-  Both bugs above were found *after* shipping, and crates.io versions cannot
-  be deleted, only yanked.
+- **No dry-run mode for crates or wheels.** Every rehearsal of a publish change
+  there is a real publish; both bugs above were found *after* shipping, and
+  crates.io versions cannot be deleted, only yanked. The two HF surfaces do
+  have one — `publish_tokenizer.py --dry-run` and `publish_dataset.py
+  --dry-run`, plus `publish_dataset.py --verify-only` to audit a live dataset
+  repo against the working tree without uploading anything.
 
 ## Not on the roadmap
 
