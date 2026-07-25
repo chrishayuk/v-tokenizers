@@ -90,12 +90,20 @@ jobs:
         # 1/{name}, 2 char -> 2/{name}, 3 char -> 3/{first-char}/{name}, 4+
         # char -> {first-2}/{next-2}/{name}. Got this wrong the first time
         # (used the web-API shape), which made a genuinely successful
-        # v11-core publish look like a failure (real 2026-07-24 run). Skip-
-        # if-already-published makes this safe to redispatch after a partial
-        # failure, since `cargo publish` errors on a version that already
-        # exists.
+        # v11-core publish look like a failure (real 2026-07-24 run).
+        #
+        # The skip check must be per-VERSION, not per-crate. It originally
+        # asked only whether the crate had an index file at all, which is true
+        # forever once the first version ships -- so the 0.1.1 release skipped
+        # all three crates, published nothing, and reported success (real
+        # 2026-07-25 run; PyPI shipped 0.1.1 while crates.io stayed on 0.1.0).
+        # An index file is newline-delimited JSON, one object per version, so
+        # the honest question is whether THIS version's object is in it.
         run: |
           set -euo pipefail
+
+          VERSION=$(grep -m1 '^version = ' Cargo.toml | sed -E 's/.*"(.*)".*/\1/')
+          echo "publishing version ${VERSION}"
 
           sparse_path() {
             local name="$1" len=${#1}
@@ -106,26 +114,40 @@ jobs:
             fi
           }
 
-          wait_for_index() {
-            local name="$1" path
+          # No pipe on purpose. `curl ... | grep -q` looks natural but is a
+          # trap under `set -o pipefail`: grep exits at the first match and
+          # closes the pipe, curl dies of SIGPIPE, and the pipeline reports
+          # failure on the SUCCESS path -- i.e. it would republish a version
+          # that is already live. Capture the body, then match it.
+          version_on_index() {
+            local name="$1" path body
             path=$(sparse_path "$name")
+            body=$(curl -fsS --retry 3 --retry-connrefused \
+                     "https://index.crates.io/${path}" 2>/dev/null) || return 1
+            case "$body" in
+              (*"\"vers\":\"${VERSION}\""*) return 0 ;;
+              (*) return 1 ;;
+            esac
+          }
+
+          wait_for_index() {
+            local name="$1"
             for i in $(seq 1 30); do
-              if curl -fsS "https://index.crates.io/${path}" >/dev/null 2>&1; then
-                echo "$name is live on the index"
+              if version_on_index "$name"; then
+                echo "$name ${VERSION} is live on the index"
                 return 0
               fi
-              echo "$name not yet indexed, waiting (attempt $i/30)..."
+              echo "$name ${VERSION} not yet indexed, waiting (attempt $i/30)..."
               sleep 10
             done
-            echo "$name never appeared on the index after 5 minutes" >&2
+            echo "$name ${VERSION} never appeared on the index after 5 minutes" >&2
             return 1
           }
 
           publish_if_needed() {
-            local name="$1" path
-            path=$(sparse_path "$name")
-            if curl -fsS "https://index.crates.io/${path}" >/dev/null 2>&1; then
-              echo "$name already published, skipping"
+            local name="$1"
+            if version_on_index "$name"; then
+              echo "$name ${VERSION} already published, skipping"
             else
               cargo publish -p "$name" --token "${CARGO_REGISTRY_TOKEN}"
               wait_for_index "$name"
@@ -135,6 +157,17 @@ jobs:
           publish_if_needed v11-core
           publish_if_needed v11-builder
           publish_if_needed v11-cli
+
+          # Assert the outcome rather than trusting the control flow above.
+          # The bug this replaces was invisible precisely because every step
+          # "succeeded" -- a release that publishes nothing must fail loudly.
+          for name in v11-core v11-builder v11-cli; do
+            if ! version_on_index "$name"; then
+              echo "::error::${name} ${VERSION} is not on the index after publishing"
+              exit 1
+            fi
+            echo "verified ${name} ${VERSION} on the index"
+          done
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
