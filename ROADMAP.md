@@ -133,6 +133,11 @@ in the document rather than silently fixed.
 - **The bench harness is shared on purpose.** `bench/` sits at the repo root
   rather than under either version because it already spans both, and future
   generations should plug into it rather than each growing their own.
+- **`v11-bench` and `v11-demos` are not crates.io artifacts.** Their defaults
+  are repo-relative (`v11/artifacts`, `v11/corpus`), so an installed copy has
+  nothing to point at. Both now carry `publish = false`; before that only
+  `v11-demos` did, and a stray `cargo publish -p v11-bench` would have gone
+  through. They are exercised by the release checklist and CI, not shipped.
 
 ## Not on the roadmap
 

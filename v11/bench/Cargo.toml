@@ -6,6 +6,13 @@ license.workspace = true
 description = "Performance + comparison benchmarks for v11 vs ecosystem tokenizers"
 keywords.workspace = true
 categories.workspace = true
+# Not a crates.io artifact, for the same reason as v11-demos: its defaults are
+# repo-relative (v11/artifacts, v11/corpus), so an installed copy has nothing
+# to point at unless every path is passed explicitly. It was already left out
+# of publish.yml's crate list and never given the repository/homepage metadata
+# the three published crates carry -- but nothing enforced that, so a stray
+# `cargo publish -p v11-bench` would have gone through.
+publish = false
 
 [[bin]]
 name = "v11-bench"

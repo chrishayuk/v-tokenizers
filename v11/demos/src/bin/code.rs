@@ -1,10 +1,16 @@
 //! Demo — show code-specific single-token hits.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use v11_core::Tokenizer;
 
+const VOCAB: &str = "v11/artifacts/v11.vocab.bin";
+
 fn main() -> Result<()> {
-    let tok = Tokenizer::from_file("v11/artifacts/v11.vocab.bin")?;
+    // See basic.rs — this one is also a documented release-process step, so a
+    // wrong-directory run should say which file it wanted, not just "No such
+    // file or directory".
+    let tok = Tokenizer::from_file(VOCAB)
+        .with_context(|| format!("couldn't load {VOCAB} — run this from the repo root"))?;
 
     let checks = [
         (

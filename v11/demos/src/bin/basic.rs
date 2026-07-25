@@ -1,10 +1,17 @@
 //! Demo — encode + decode a few sample sentences.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use v11_core::Tokenizer;
 
+const VOCAB: &str = "v11/artifacts/v11.vocab.bin";
+
 fn main() -> Result<()> {
-    let tok = Tokenizer::from_file("v11/artifacts/v11.vocab.bin")?;
+    // The path is repo-relative and the demos take no arguments, so the only
+    // way this fails in practice is being run from the wrong directory. Say so
+    // -- bare `?` here reports "No such file or directory" naming no file at
+    // all, which is a poor thing to hand someone following the release steps.
+    let tok = Tokenizer::from_file(VOCAB)
+        .with_context(|| format!("couldn't load {VOCAB} — run this from the repo root"))?;
 
     let samples = [
         "The capital of France is Paris.",
