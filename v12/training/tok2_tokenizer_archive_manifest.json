@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "status": "archived-and-lineage-verified",
+  "archived_at_utc": "2026-07-25",
+  "registry": {
+    "program": "v12-tokenizer",
+    "experiment": "tok-0-harness-pinning",
+    "producing_run_id": "RUN-20260718-224711-00385",
+    "lineage_verified": true,
+    "lineage_rule": "every artifact reports RUN-20260718-224711-00385 as produced_by_run_id"
+  },
+  "artifacts": [
+    {
+      "arm_id": "U16_whitespace_split",
+      "artifact_id": 712,
+      "name": "tok2-U16-whitespace-split-tokenizer",
+      "uri": "gdrive://1NXxgqD8fticcyrOhVatIigQlEsI5I2hR",
+      "sha256": "29e495842b519a812878e1dfe15159bfc71fc70ff26fd29373f1e1d0382f1c21"
+    },
+    {
+      "arm_id": "U16_digit_isolating",
+      "artifact_id": 713,
+      "name": "tok2-U16-digit-isolating-tokenizer",
+      "uri": "gdrive://1KHm0pmA49q7Jr5B4HoLHWHstiLW_XAUP",
+      "sha256": "aff90185030345f86c4c420857485e28b5bd9086be8b7c43889de209977a8554"
+    },
+    {
+      "arm_id": "U16_code_aware",
+      "artifact_id": 714,
+      "name": "tok2-U16-code-aware-tokenizer",
+      "uri": "gdrive://1mV1mNErDJ6Xie4LhlNkHwSoK7kOvb3Xz",
+      "sha256": "aff3288bde696ccd440c99dc2e3475ad78edc5897c90be1a5b57e5ba84628f05"
+    },
+    {
+      "arm_id": "B16_whitespace_split",
+      "artifact_id": 715,
+      "name": "tok2-B16-whitespace-split-tokenizer",
+      "uri": "gdrive://1aWjmt8l0J5fs2heHBsoTJbW6IOwrdNnn",
+      "sha256": "913935e56880919cd26723e0047c679f700f76998f9e6e97a404e24450f2fcb2"
+    },
+    {
+      "arm_id": "B16_digit_isolating",
+      "artifact_id": 716,
+      "name": "tok2-B16-digit-isolating-tokenizer",
+      "uri": "gdrive://1eUW3bA0Hl9mLa78Bg_8mQTb5RgdlyIRg",
+      "sha256": "1bb8bef4fdd666ed0920cc6d89c4b2219b87140b75d5cef4561890c8d6b91291"
+    },
+    {
+      "arm_id": "B16_code_aware",
+      "artifact_id": 717,
+      "name": "tok2-B16-code-aware-tokenizer",
+      "uri": "gdrive://1KipFTakV6eoL-xliNZe8m-Nlts5VyfK1",
+      "sha256": "b96b72a2d24cc31b70ed170cdbd1b021cabdc76d81dbf68cba7514980f6d50f6"
+    }
+  ],
+  "verification": {
+    "local_source": "tok2_tokenizer_arms.json",
+    "all_registry_hashes_match_frozen_local_hashes": true,
+    "generated_artifacts_are_gitignored": true,
+    "recovery_rule": "restore by registry URI and reject the file unless its SHA-256 matches this manifest"
+  }
+}
