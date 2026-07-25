@@ -15,7 +15,8 @@ name: Release (manual)
 #   PYPI_TOKEN            -- PyPI API token, for publish_pypi (maturin-action
 #                            reads it via MATURIN_PYPI_TOKEN)
 #   HF_TOKEN              -- HuggingFace write-access token, for publish_hf
-# All three are set and have been used for a real release (0.1.0, 2026-07-24).
+# All three are set and have been used for real releases (0.1.0 2026-07-24,
+# 0.1.1 2026-07-25).
 # If one ever needs rotating, `gh secret set NAME` (run it yourself, so the
 # value never appears in any chat/transcript) is the simplest way.
 

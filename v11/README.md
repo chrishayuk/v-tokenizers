@@ -123,7 +123,7 @@ cargo run -p v11-bench --release
 
 Installed (`cargo install v11-cli`) the binary is called `v11`; from a checkout
 use `cargo run -p v11-cli --release --`. Note `vocab` needs 0.1.1 or newer —
-crates.io currently carries 0.1.0, which predates it.
+0.1.0 predates it.
 
 ```bash
 # Encode text
@@ -157,9 +157,10 @@ pip install v11-tokenizer     # distribution name; the import is `v11`
 ```
 
 Wheels are built against PyO3's stable ABI, so one wheel per platform covers
-every Python >= 3.9. (0.1.0 on PyPI predates that and ships only a macOS
-arm64 / cp312 wheel; elsewhere pip falls back to the sdist and needs a Rust
-toolchain.) To build from a checkout instead:
+every Python >= 3.9 — Linux (x86_64/aarch64), macOS (Intel/Apple silicon) and
+Windows x64. (0.1.0 predates that and ships only a macOS arm64 / cp312 wheel;
+on it, pip falls back to the sdist elsewhere and needs a Rust toolchain. Use
+0.1.1 or newer.) To build from a checkout instead:
 
 ```bash
 maturin build --release -m v11/python/Cargo.toml

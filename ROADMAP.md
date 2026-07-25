@@ -10,7 +10,7 @@ disagree, they are right and this is stale.
 
 | Line | State | Next thing that has to happen |
 |---|---|---|
-| **v11** | Published, stable, byte-safe | Publish 0.1.1; decide whether v11.1 is worth a vocabulary rebuild |
+| **v11** | Published at 0.1.1, stable, byte-safe | Decide whether v11.1 is worth a vocabulary rebuild — and that waits on v12 |
 | **v12** | Mid-funnel, first real G1 survivor | TOK-2 is *not decided* — phase3 retrain for v11's side |
 | **v13** | Pre-registration only, nothing built | Blocked on v12 TOK-2b settling |
 
@@ -18,10 +18,11 @@ disagree, they are right and this is stale.
 
 ## v11 — shipped
 
-Live on crates.io, PyPI, and the HF Hub since 2026-07-24. Byte-safe since the
-same day: `0 UNK, 32/32 files round-trip`, enforced in CI as a real gate rather
-than `continue-on-error`. The Rust encoder is verified token-for-token
-identical to HF `tokenizers` on the published `tokenizer.json`.
+Live on crates.io, PyPI, and the HF Hub since 2026-07-24, at **0.1.1** since
+2026-07-25. Byte-safe since 2026-07-24: `0 UNK, 32/32 files round-trip`,
+enforced in CI as a real gate rather than `continue-on-error`. The Rust encoder
+is verified token-for-token identical to HF `tokenizers` on the published
+`tokenizer.json`.
 
 Treat the shipped vocabulary as frozen. Its ids are baked into already-trained
 model weights, so anything that changes the pieces publishes under a **new
@@ -29,9 +30,6 @@ name**, never as a new revision of `chrishayuk/v11-tokenizer`.
 
 ### Open, ready to do
 
-- **Publish 0.1.1.** Prepared in-repo, not yet dispatched. Ships the `v11 vocab`
-  subcommand to crates.io and gives PyPI wheels for more than one platform.
-  See [Releases](README.md#releases).
 - **Test coverage.** `v11-cli`, `v11-builder` and `v11-bench` have ~0 dedicated
   unit tests; their logic is currently exercised only indirectly, through the
   bench harness's subprocess-driven checks. No per-file threshold is enforced
