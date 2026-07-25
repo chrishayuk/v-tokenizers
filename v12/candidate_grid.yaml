@@ -9,6 +9,26 @@ axes:
   core_vocab_size: [4000, 8000, 16000, 32000]
   pre_tokenization: ["whitespace_split", "digit_isolating", "code_aware"]
 
+# The full 48-cell declaration remains historical/preregistered context. The
+# next run is intentionally restricted to the six cells that can still answer
+# a live decision. Implemented by training/train_structural_candidate.py.
+tok2_selective_pre_tokenization:
+  status: "implemented, not yet run"
+  corpus: "C8 v3 (must be frozen before training)"
+  vocab_size: 16000
+  arms:
+    - {id: "U16_whitespace_split_c8v3", algorithm: "unigram", pre_tokenization: "whitespace_split"}
+    - {id: "U16_digit_isolating_c8v3", algorithm: "unigram", pre_tokenization: "digit_isolating"}
+    - {id: "U16_code_aware_c8v3", algorithm: "unigram", pre_tokenization: "code_aware"}
+    - {id: "B16_whitespace_split_c8v3", algorithm: "bpe", pre_tokenization: "whitespace_split"}
+    - {id: "B16_digit_isolating_c8v3", algorithm: "bpe", pre_tokenization: "digit_isolating"}
+    - {id: "B16_code_aware_c8v3", algorithm: "bpe", pre_tokenization: "code_aware"}
+  invariant: "training and runtime use the same serializable tokenizer.json pre-tokenizer"
+  structural_profile:
+    evaluator: "training/evaluate_structural_profile.py"
+    probes: "targets/structural_profile.jsonl"
+    metrics: ["boundary_precision", "boundary_recall", "atomic_span_rate", "mean_identifier_or_unit_fragmentation", "context_sequence_preservation_rate", "roundtrip_rate"]
+
 digit_policy: "C6 — single-char digits on every subword candidate"
 
 ablation:
