@@ -35,6 +35,17 @@ ordered raw-document hashes and no phase-1 eliminations. The rehearsal uses a
 small canary model and cannot rank tokenizers. See
 `training/TOK2_REHEARSAL.md`.
 
+The production runner is frozen but has not been launched. It schedules both
+phases by complete-document UTF-8 bytes, evaluates C3 at every quarter
+checkpoint, records paired initialization evidence and resource accounting,
+and refuses expensive work without a frozen run ID plus `--execute`.
+`training/tok2_production_manifest.json` contains 48 local production cells;
+**0/48 have results**. Because 48 full runs are costly, a lean 24-cell revision
+(one structurally selected U16 and B16 variant, plus v11 and pure byte, under
+both controls and three seeds) is under consideration. Any revision must
+supersede the current manifest before the first model result. See
+`training/TOK2_PRODUCTION.md`.
+
 `STREAMING_CONTRACT.md` separates exact whole-document behavior from an
 eventual stateful byte-streaming API. Published v11 remains immutable.
 The separately named `v11-ws-exact` adapter now supplies the TOK-2 incumbent
@@ -77,14 +88,14 @@ deterministic exact-text deduplication, pinned-source digest checks, and
 byte-exact domain budgets whose proportions remain constant under
 `--total-bytes` scale changes. It refuses to repeat a thin domain.
 
-`c8_v3_spec.json` pins the proposed 45/20/15/15/5 proportions and now has a
-frozen code allocation: seven revision-pinned repositories produce 16.16 MB
-after deterministic file/repository/language/identifier/duplicate caps.
-`corpus/code_pool_frozen_manifest.json` records the evidence and exact source
-hash. The overall specification remains deliberately
-`draft-awaiting-source-pins`: full-scale sources for prose, maths/reasoning,
-JSON/tool/cell, and noisy Unicode still need to be selected, and C3 exclusion
-evidence remains open. C8 v3 is therefore **partly sourced but not frozen**.
+`c8_v3_spec.json` pins the 45/20/15/15/5 proportions and every full-scale
+source. Seven revision-pinned repositories produce the code allocation after
+deterministic file/repository/language/identifier/duplicate caps; TinyStories,
+the Cell80-derived maths and structured views, and the noisy Unicode source
+are revision- and digest-pinned as well.
+`corpus/code_pool_frozen_manifest.json` records the code evidence, while
+`corpus/c3_v12_manifest.json` records the fresh excluded evaluation slice.
+C8 v3 is **fully frozen**, not a draft.
 
 ## Layout
 
@@ -158,6 +169,13 @@ v-tokenizers/
       rehearse_tok2_matrix.py      48-cell non-ranking orchestration canary
       tok2_rehearsal_results.json  tracked rehearsal evidence
       TOK2_REHEARSAL.md            scope, results, and reproduction
+      tok2_tokenizer_archive_manifest.json registry recovery IDs and hashes
+      tok2_production_spec.json    byte schedule, optimizer, evaluation, statistics
+      tok2_production_manifest.json exact 48-cell pre-run manifest
+      freeze_tok2_production.py    regenerates/refuses manifest drift
+      train_tok2_production.py     guarded phase-1/phase-3 runner
+      analyze_tok2_production.py   paired and compute-normalized analysis
+      TOK2_PRODUCTION.md           worker, resume, and launch contract
       v11_ws_exact.py              Python/HF/Transformers incumbent adapter
       v11_ws_exact_manifest.json   immutable base hashes and adapter contract
       candidates/<id>/           (gitignored) trained .model + vocab.json per candidate
@@ -446,8 +464,9 @@ Worth doing once a v12 candidate wins the funnel and gets a Rust port.
   reverses it: the verified-clean v11 replication scores
   `held_out_bpb=0.6846`, beating both `bpe_sp_16000` (0.7461, 9.0%
   worse) and `unigram_sp_18000`/`unigram_sp_16000` (~0.706, ~3.1%
-  worse). Phase3 (frozen-FFN retrain) intentionally deferred — this is
-  a phase1-only comparison, single run per side, TinyStories-only.
+  worse). The later v11 phase3 frozen-FFN retrain mildly regressed to
+  0.6905; candidate phase3 and multi-seed comparisons were not completed.
+  This remains a single-run, TinyStories-only comparison.
   **The 13.3% gap between v11's original and replicated checkpoints is
   NOT characterized as "seed variance"** — that overstated an early
   draft's evidence; correctly stated, the original checkpoint simply
@@ -490,22 +509,19 @@ both real fixes below landed together — see `hardening_pass_2026_07_19`,
   `Metaspace` + `ByteFallback` decoder) instead of native
   `SentencePieceProcessor` fixes round-trip completely (0/32 failures).
   Same technique that makes `tokenizer.json` diverge from `v11.model` in
-  the first place, now put to use deliberately. NOT applied to v11
-  itself — v11's gap is a missing-byte-fallback-pieces vocab problem,
-  not a wrapping problem (verified directly), and fixing it means
-  changing v11's frozen vocab. A separate, bigger, not-yet-made decision.
-- **Corpus domain balance**: code's mixture share drifted from 15.7% to
-  0.5% when prose/math were scaled and code wasn't (see above) — needs
-  domain proportions frozen by bytes, not done yet.
-- **Corpus scale**: 21.6MB is still far from a frozen C8; T-core (538
-  real items) is a real improvement but not the design doc's frozen
-  commitment; `census_R_max` (0.95) is still deliberately permissive,
-  not a considered bar, pending category-5 measurement at real scale.
+  the first place, now put to use deliberately. Historical note: this was
+  not applied to v11 during the TOK-1 pass. The later 2026-07-24 v11 audit
+  found that its 256 byte-fallback rows already existed but were unreachable
+  in both runtime paths; routing and decoder fixes made v11 byte-safe without
+  changing its frozen vocabulary.
+- **Corpus domain balance**: SOLVED — C8 v3 is exactly 80 MB with byte-level
+  45/20/15/15/5 proportions, preserved under scale changes.
+- **Corpus scale and exclusion**: SOLVED for TOK-2 — every full-scale source
+  and output is hash-pinned, and the fresh 200-document C3 slice is excluded.
 
-None of the above needs GPU compute — they're corpus/engineering work.
-TOK-2a/b/c through TOK-4 model
-training and TOK-5 freeze need GPU compute and/or the frozen C10
-mini-ladder corpus (not yet built, no precedent found anywhere). Those
-are registered as experiments and queued as runs in `chuk-experiments`.
+The remaining immediate work is the TOK-2 compute-scope decision and target
+worker throughput measurement. Production model training is not queued from
+the frozen local manifest. Later TOK-2c through TOK-4 work still needs GPU
+compute and/or the frozen C10 mini-ladder corpus.
 The class-2 canonicalizer (and its parity check) is blocked the same
 way — it needs a real candidate's merge table.

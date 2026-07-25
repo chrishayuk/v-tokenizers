@@ -11,7 +11,7 @@ disagree, they are right and this is stale.
 | Line | State | Next thing that has to happen |
 |---|---|---|
 | **v11** | Published at 0.1.2, stable, byte-safe | Decide whether v11.1 is worth a vocabulary rebuild — and that waits on v12 |
-| **v12** | TOK-2 harness prepared; incumbent gate and C8 code source frozen | Freeze the other four C8 v3 domains, then run the multi-seed panel |
+| **v12** | C8 v3/C3, eight tokenizer arms, and decisive TOK-2 harness frozen; production 0/48 | Decide whether to supersede the 48-cell plan with the lean 24-cell panel, measure target-worker throughput, then launch |
 | **v13** | Pre-registration only, nothing built | Blocked on v12 TOK-2b settling |
 
 ---
@@ -76,12 +76,14 @@ Where it actually is:
   `round_trip_pass=true`, `unk_count=0`). Two earlier "winners" did not
   survive hardening — the first was a measurement artifact of a
   trivially-easy target set.
-- **The candidate grid is a pilot, not the design.** `candidate_grid.yaml`
+- **The historical candidate grid is a pilot, not the decisive design.** `candidate_grid.yaml`
   specifies 4 algorithms × 4 vocab sizes × 3 pre-tokenizations (48 configs).
   What has run is algorithm × vocab-size with a byte baseline. The useful
   six-cell subset (U16/B16 × whitespace/digit/code-aware) is now implemented
-  with one serializable training/runtime pipeline, but has not been trained
-  at full scale.
+  with one serializable training/runtime pipeline, trained on the full frozen
+  C8 v3 corpus, pinned at exactly 16,000 runtime rows, and archived in the
+  experiment registry. These are tokenizer artifacts, not trained language
+  models.
 - **TOK-2 is not decided in either direction.** A pinned-revision replication
   of v11 (`7d3691e`) reversed TOK-2's earlier "v12 beats v11" conclusion:
 
@@ -92,25 +94,21 @@ Where it actually is:
   | unigram_sp_18000 (U18) | 0.7062 |
   | bpe_sp_16000 | 0.7461 |
 
-  The honest reading is that this is one run per side, phase1-only, and
-  TinyStories-only, with v11's phase3/frozen-FFN retrain deliberately not yet
-  run. It is not "v11 wins" — it is "the question is open, and the earlier
-  answer was wrong."
+  The honest reading is that this is one run per side and TinyStories-only.
+  The later v11 phase3/frozen-FFN retrain mildly regressed to 0.6905; symmetric
+  candidate phase3 and multi-seed runs were not done. It is not "v11 wins" —
+  it is "the question is open, and the earlier answer was wrong."
 
   Note these are different vocab-budget classes. The compact candidates are
   being bought for their embedding tax (≈9-11% for U16/U18 vs ≈32% for v11's
   71K vocab), not for raw BPB, so a BPB loss at ≤16K is not automatically a
   loss overall.
 
-**Next:** freeze the remaining real sources in `v12/corpus/c8_v3_spec.json`,
-then follow
-`v12/TOK2_DECISIVE_PROTOCOL.md`: at least three seeds, phase one plus phase
-three, identical raw-byte exposure, and two separately reported controls
-(fixed trunk and fixed total parameters). The builder now enforces constant
-45/20/15/15/5 byte proportions and fails rather than repeating an undersized
-domain. It does not make missing full-scale source data disappear; the spec is
-honestly marked draft until those sources, C3 exclusions, and the
-repeated-identifier cap are pinned.
+**The data and execution harness are now frozen.** C8 v3 contains exactly
+80,000,000 UTF-8 text bytes at constant 45/20/15/15/5 domain proportions.
+Every source, code-pool cap, C3 exclusion, and output digest is pinned, and two
+independent builds were byte-identical. The fresh 200-document C3 slice has
+zero exact-text overlap with C8.
 
 The protocol now also pins paired run labels, an FFN-width-only
 fixed-total match within 0.25%, byte-parameterized schedules, exactly 16,000
@@ -120,16 +118,33 @@ stateless chunks. The separately named `v11-ws-exact` adapter now passes the
 whole-input gate across Hugging Face, Transformers, and Rust on 23 fixed plus
 200 generated Unicode cases, while leaving published v11 unchanged.
 
-The code allocation is now frozen. `v12/corpus/audit_code_pool.py` inventories
+The code allocation is frozen. `v12/corpus/audit_code_pool.py` inventories
 immutable Git objects with repository/commit/path/hash/language/licence
 provenance and applies the selected pre-model caps. Seven pinned repositories
 produce 16.16 MB across TypeScript, Python, C/C++, Go, Rust, configuration, and
 smaller language strata. `v12/corpus/CODE_POOL_FREEZE.md` records the
-strict/balanced/permissive comparison. Prose, maths/reasoning, JSON/tool/cell,
-noisy Unicode, and C3 exclusion evidence remain open.
+strict/balanced/permissive comparison.
+
+`v12/training/tok2_production_manifest.json` currently defines 48 production
+cells: eight tokenizer arms × fixed-trunk/fixed-total controls × three paired
+seeds. The complete non-ranking canary passed 48/48 cells, and the production
+preflight validates all eight tokenizer contracts and five real model shapes
+without taking an optimizer step. The six generated tokenizer artifacts are
+externally archived with verified hashes and lineage. **No decisive production
+model has been trained: 0/48 runs are complete.**
+
+The remaining immediate decision is compute scope. Before any result exists,
+the clean alternatives are to retain the current 48-cell manifest or
+supersede it with a preregistered structural selection rule choosing one U16
+and one B16 pre-tokenizer, followed by v11/U16/B16/byte under both controls and
+three paired seeds (24 cells). Whichever design is chosen must be frozen
+before launch; phase-one quality cannot eliminate arms. Two short,
+non-ranking throughput probes on the target worker (v11 fixed-total and
+pure-byte fixed-total) should price the extremes before committing GPU hours.
 
 Until that panel lands, neither promoting a v12 candidate nor committing to
-v11.1 is a decision the evidence supports.
+v11.1 is a decision the evidence supports. v13 remains blocked for the same
+reason.
 
 ## v13 — pre-registered only
 
