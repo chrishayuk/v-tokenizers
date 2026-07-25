@@ -80,13 +80,19 @@ pinned-revision replication that closes this gap.
 - **~28M tokens/sec** decode.
 - **Metaspace pre-tokenization** matching HF `Metaspace(prepend_scheme=always, split=true)`
   — specifically: splits only on the literal space character (0x20), not
-  general ASCII whitespace.
+  general ASCII whitespace. A conformance corpus added 2026-07-25 exposed
+  the corresponding boundary limitation: a literal space at the very start
+  of an input is indistinguishable from Metaspace's synthetic prefix and is
+  lost on decode. The shipped Rust and HF artifacts agree on this behavior;
+  see `bench/conformance/`.
 - **Byte fallback at runtime — since 2026-07-24.** A byte the trie can't
   match becomes its own one-byte lattice edge routed to that byte's
   `<0xNN>` vocab piece *by value* (a `byte_ids: [Option<u32>; 256]` table
   built at construction), and on decode a byte-fallback id contributes its
   raw byte, not its `<0xNN>` piece text — so literal tabs, newlines,
-  multi-space runs and any character outside the vocab round-trip exactly.
+  interior multi-space runs and any character outside the vocab round-trip
+  exactly. This does not override the leading-space Metaspace limitation
+  above.
   Measured on this repo's own 32-file corpus: **0 UNK, 32/32 files pass**
   (662 UNK / 32-of-32-fail before the fix), enforced by the CI `roundtrip`
   gate. Before that fix the `<0xNN>` pieces were only ever matched as

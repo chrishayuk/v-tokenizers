@@ -36,6 +36,9 @@ v-tokenizers/
                    version, since future tokenizer generations should
                    plug into the same harness rather than each growing
                    their own.
+    conformance/  deterministic adversarial + generated-Unicode corpus;
+                   checks offsets, round-trip, chunk-boundary behavior,
+                   and optional Rust/Python/tokenizers/transformers parity.
   core/           RESERVED, not yet created. Meant for Rust logic actually
                    shared between v11 and v12 (vocab loading, trie/error
                    types, special-token handling) once v12 has a Rust-side
@@ -118,6 +121,19 @@ v-tokenizers/
   canonical, not a claim that either one is byte-safe -- see above.
   "Byte-identical to the `tokenizer.json`/`tokenizers`-library path" is
   the accurate claim; "byte-identical to SentencePiece" is not.
+- **The broader conformance corpus found a boundary limitation
+  (2026-07-25).** The 32-file byte-safety gate remains true, but it was not a
+  proof over arbitrary strings. `bench/conformance/run_conformance.py`
+  checks stable adversarial cases plus 200 deterministic random-Unicode
+  cases across `tokenizers`, `AutoTokenizer`, and optionally the Rust CLI
+  and Python binding. It found that a string beginning with a literal space
+  loses that space on decode in both the canonical HF artifact and Rust:
+  `Metaspace(prepend_scheme="always")` cannot distinguish the real leading
+  space from its synthetic prefix. It also measures that independent
+  chunk-wise encoding loses boundary spaces unless a streaming wrapper
+  carries state. These are disclosed conformance gaps, not byte-fallback
+  regressions; the existing corpus gate simply did not contain a
+  leading-space file.
 - **v12**: mid-funnel, hardened three times (2026-07-19) -- and the
   third time produced **the funnel's first real, non-exempt Gate G1
   survivor**: `bpe_sp_16000_v1_tcoreseed_bytefallback`. Sequence: real

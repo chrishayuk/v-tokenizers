@@ -11,7 +11,7 @@ disagree, they are right and this is stale.
 | Line | State | Next thing that has to happen |
 |---|---|---|
 | **v11** | Published at 0.1.2, stable, byte-safe | Decide whether v11.1 is worth a vocabulary rebuild — and that waits on v12 |
-| **v12** | Mid-funnel, first real G1 survivor | TOK-2 is *not decided* — phase3 retrain for v11's side |
+| **v12** | Mid-funnel, decisive TOK-2 harness now being prepared | Freeze C8 v3 sources, then run the multi-seed two-control panel |
 | **v13** | Pre-registration only, nothing built | Blocked on v12 TOK-2b settling |
 
 ---
@@ -36,6 +36,12 @@ name**, never as a new revision of `chrishayuk/v11-tokenizer`.
   bench harness's subprocess-driven checks. No per-file threshold is enforced
   in CI because one would not currently pass — this is follow-up test-writing
   work, not a switch to flip.
+- **Leading-space and streaming semantics.** The new reusable conformance
+  corpus confirms Rust/HF token-ID parity but exposes that canonical
+  `Metaspace(prepend_scheme="always")` drops a literal leading space and that
+  independently encoded chunks lose boundary spaces. Decide whether v11 keeps
+  this canonical behavior or gains an explicitly stateful/preserving interface
+  before advertising arbitrary-input streaming conformance.
 
 ### Open, needs a decision first
 
@@ -73,8 +79,10 @@ Where it actually is:
   trivially-easy target set.
 - **The candidate grid is a pilot, not the design.** `candidate_grid.yaml`
   specifies 4 algorithms × 4 vocab sizes × 3 pre-tokenizations (48 configs).
-  What has run is algorithm × vocab-size with a byte baseline; the
-  `pre_tokenization` axis is entirely unimplemented.
+  What has run is algorithm × vocab-size with a byte baseline. The useful
+  six-cell subset (U16/B16 × whitespace/digit/code-aware) is now implemented
+  with one serializable training/runtime pipeline, but has not been trained
+  at full scale.
 - **TOK-2 is not decided in either direction.** A pinned-revision replication
   of v11 (`7d3691e`) reversed TOK-2's earlier "v12 beats v11" conclusion:
 
@@ -95,9 +103,32 @@ Where it actually is:
   71K vocab), not for raw BPB, so a BPB loss at ≤16K is not automatically a
   loss overall.
 
-**Next:** the phase3 retrain that makes the two sides comparable. Until that
-lands, neither promoting a v12 candidate nor committing to v11.1 is a decision
-the evidence supports.
+**Next:** freeze the real sources in `v12/corpus/c8_v3_spec.json`, then follow
+`v12/TOK2_DECISIVE_PROTOCOL.md`: at least three seeds, phase one plus phase
+three, identical raw-byte exposure, and two separately reported controls
+(fixed trunk and fixed total parameters). The builder now enforces constant
+45/20/15/15/5 byte proportions and fails rather than repeating an undersized
+domain. It does not make missing full-scale source data disappear; the spec is
+honestly marked draft until those sources, C3 exclusions, and the
+repeated-identifier cap are pinned.
+
+The protocol now also pins paired run labels, an FFN-width-only
+fixed-total match within 0.25%, byte-parameterized schedules, exactly 16,000
+model-visible compact-vocabulary rows, diagnostic-only structural metrics,
+and no phase-one elimination. `v12/STREAMING_CONTRACT.md` prohibits arbitrary
+stateless chunks and records that published v11 needs a separately named
+whitespace-exact revision or adapter before it satisfies TOK-2's whole-input
+gate.
+
+For the code allocation, `v12/corpus/audit_code_pool.py` inventories immutable
+Git objects with repository/commit/path/hash/language/licence provenance and
+reports identifier and duplicate concentration before caps are selected. Its
+draft spec contains only this repository as a relevance seed; adding diverse
+external repositories and freezing caps remains real corpus work, not an
+implemented-data claim.
+
+Until that panel lands, neither promoting a v12 candidate nor committing to
+v11.1 is a decision the evidence supports.
 
 ## v13 — pre-registered only
 

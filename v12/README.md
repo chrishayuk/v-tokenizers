@@ -1,4 +1,4 @@
-# v12 Tokenizer — TOK-0/TOK-1 Harness + First Real Candidates
+# v12 Tokenizer — TOK-0/TOK-1 Harness + Decisive TOK-2 Preparation
 
 Implements the TOK-0 deliverables from `v12-tokenizer-design-funnel.md`
 (DRAFT v0.5): the harness, the pin file, target sets, the candidate
@@ -10,9 +10,29 @@ candidates.
 specifies a 4-algorithm × 4-vocab-size × 3-pre_tokenization grid (48
 subword configs) plus the pure-byte branch. What exists today is an
 **algorithm × vocab-size pilot with a byte baseline** — the
-`pre_tokenization` axis (`whitespace_split`/`digit_isolating`/
-`code_aware`) is entirely unimplemented; every candidate trained so far
-uses one implicit pretokenization. Real progress, not the full design.
+historical candidates all use one implicit pretokenization. As of
+2026-07-25, the missing axis is implemented for the only six cells that
+still answer a useful question (U16/B16 × `whitespace_split`/
+`digit_isolating`/`code_aware`), but those candidates have **not been
+trained on the full corpus**. Real implementation, not a claimed result.
+
+The next-run design is pinned in `TOK2_DECISIVE_PROTOCOL.md`: three seeds,
+phase one plus phase three, identical raw-byte exposure, confidence
+intervals, and separate fixed-trunk and fixed-total-parameter comparisons.
+The tightened protocol pairs randomness across arms, defines the
+fixed-total control as an FFN-width-only change, schedules training by raw
+bytes, defines 16K as exactly 16,000 model-visible rows including specials
+and byte fallback, and prohibits phase-one elimination.
+`training/tok2_architecture_controls.json` pins the resulting parameter table
+(FFN 2968 for U16/B16 and 3232 for byte under fixed total), while
+`training/tok2_paired_seeds.json` separates trunk, vocabulary-shaped, phase-1,
+and phase-3 RNG streams.
+
+`STREAMING_CONTRACT.md` separates exact whole-document behavior from an
+eventual stateful byte-streaming API. Published v11 remains immutable and
+fails the newly pinned leading-space case; TOK-2 therefore requires a
+separately named whitespace-exact revision/adapter before the incumbent arm
+can run.
 
 Tracked in the `chuk-experiments` server under programme `v12-tokenizer`,
 experiments `tok-0-harness-pinning` through `tok-5-freeze`.
@@ -45,10 +65,18 @@ files. See `v11/README.md`'s Data section for what `v11/corpus/` actually
 is (a small v11-bench spot-check sample; v11's vocab itself isn't
 corpus-trained at all).
 
-Build order: `build_code_corpus.py` → `assemble_c8_corpus.py`. Not yet
-done: dedup, C3-slice exclusion, repeated-identifier cap, domain
-proportions frozen by bytes (code's share has now fallen to 0.1%, down
-from 15.7% at the original prototype scale — see "Not done here" below).
+Historical build order: `build_code_corpus.py` →
+`assemble_c8_corpus.py`. The replacement `build_c8_v3.py` implements
+deterministic exact-text deduplication, pinned-source digest checks, and
+byte-exact domain budgets whose proportions remain constant under
+`--total-bytes` scale changes. It refuses to repeat a thin domain.
+
+`c8_v3_spec.json` pins the proposed 45/20/15/15/5 proportions, but is
+deliberately marked `draft-awaiting-source-pins`: the current 105KB code
+harvest cannot honestly fill a 16MB code allocation, and full-scale
+revision-pinned sources for JSON/tool/cell and noisy Unicode still need to
+be selected. C8 v3 is therefore **buildable but not frozen**. C3 exclusion
+and the repeated-identifier cap remain freeze checklist items.
 
 ## Layout
 
@@ -66,6 +94,10 @@ v-tokenizers/
       parity_vectors.jsonl         golden vectors shared by both languages
       test_canonicalizer_parity.py Python side of the parity check
       frame_battery.jsonl          T-num probes x 4 framing contexts
+    conformance/
+      cases.jsonl                  stable CRLF/control/Unicode/structured probes
+      generate_cases.py            deterministic random-Unicode lane
+      run_conformance.py           tokenizers/transformers/Rust/Python parity
     reports/                  run output lands here (gitignored)
 
   v11/                        stable, publishable — see repo-root README
@@ -87,6 +119,12 @@ v-tokenizers/
       c8_code_corpus.jsonl / c8_corpus_v0/v1/v2.jsonl / .txt   (gitignored, regenerable;
                                train_candidate.py defaults to --corpus-version v1,
                                later 16K/18K candidates trained on v2 explicitly)
+      build_c8_v3.py          byte-exact, no-repetition, source-pinned v3 builder
+      c8_v3_spec.json         proposed proportions + explicit freeze checklist
+      test_build_c8_v3.py     allocator/reproducibility/UTF-8 regression tests
+      audit_code_pool.py      reads pinned Git objects; audits source diversity
+      code_pool_spec.json     repository/licence strata; caps deliberately unset
+      test_audit_code_pool.py pinned-object and filtering regression tests
 
     training/                 candidate training + real evaluation (scripts
                                tracked; trained candidates/ and candidates.jsonl
@@ -96,6 +134,13 @@ v-tokenizers/
       train_byte_level_bpe.py    trains a real byte-level BPE candidate (tokenizers library)
       build_pure_byte_vocab.py   builds the deterministic 260-token Branch B vocab
       evaluate_candidate.py      evaluates every candidate through its own real library
+      pretokenization.py         serializable whitespace/digit/code-aware definitions
+      train_structural_candidate.py  trains the selective U16/B16 six-arm screen
+      test_structural_candidate.py  saved-artifact round-trip + boundary tests
+      evaluate_structural_profile.py offset-based structural metrics by category
+      tok2_architecture_controls.json exact fixed-trunk/fixed-total counts
+      tok2_paired_seeds.json       paired RNG streams and identical data order
+      validate_tok2_controls.py    recomputes widths/counts and seed invariants
       candidates/<id>/           (gitignored) trained .model + vocab.json per candidate
       candidates.jsonl           (gitignored) real per-candidate evaluation rows
 
@@ -104,6 +149,71 @@ v-tokenizers/
       src/lib.rs               canonicalize_identity + #[test] against the same
                                 parity_vectors.jsonl the Python side uses
 ```
+
+## Preparing C8 v3 and the selective pre-tokenization screen
+
+Fill every domain's `sources` list in `c8_v3_spec.json` with JSONL source
+descriptors. A frozen source descriptor must include `path` and `sha256`;
+`where` can filter a shared JSONL file:
+
+```json
+{
+  "path": "source.jsonl",
+  "sha256": "...",
+  "where": {"field": "domain", "equals": "code"}
+}
+```
+
+Then mark the specification `frozen` and build:
+
+```bash
+python3 v12/corpus/build_c8_v3.py
+```
+
+The same mixture can be checked at a smaller scale without changing its
+proportions:
+
+```bash
+python3 v12/corpus/build_c8_v3.py --total-bytes 8000000
+```
+
+Before filling the 20% code allocation, audit the repository-stratified pool:
+
+```bash
+python3 v12/corpus/audit_code_pool.py
+```
+
+The draft pool currently contains only this repository as a project-relevant
+seed and is intentionally insufficient. The audit reads the pinned commit
+objects rather than mutable worktrees and reports bytes before/after filtering,
+languages, licences, normalized identifiers, and exact/normalized/SimHash
+duplicate clusters. Add diverse pinned repositories, inspect the diagnostic,
+then preregister cap scenarios; do not choose caps after model results exist.
+
+Train one selective arm after C8 v3 freezes:
+
+```bash
+python3 v12/training/train_structural_candidate.py \
+  --algorithm unigram \
+  --pre-tokenization code_aware
+```
+
+Repeat for `unigram`/`bpe` × `whitespace_split`/`digit_isolating`/
+`code_aware`. Each output directory contains the runtime
+`tokenizer.json` and a `candidate.json` that pins corpus and artifact
+digests.
+
+Produce the common structural profile:
+
+```bash
+python3 v12/training/evaluate_structural_profile.py \
+  --tokenizer v12/training/candidates/U16_code_aware_c8v3/tokenizer.json
+```
+
+`targets/structural_profile.jsonl` is a small checked smoke battery, not the
+final statistical dataset. Its schema supports offset-annotated AST leaves,
+identifiers, JSON fields, cell frames, digits, and morphemes; scale each
+category with source-derived probes before ranking real candidates.
 
 A `core/` crate at the repo root is reserved for logic shared between
 `v11/` and `v12/` (vocab loading, trie/error types, special-token
