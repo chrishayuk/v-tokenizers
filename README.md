@@ -230,6 +230,17 @@ renders a package's description from the uploaded distribution and there is no
 way to update it in place, so 0.1.1's page keeps its stale README until a newer
 version ships. Publishing is the only way to correct what PyPI shows.
 
+**And the release found a bug in the pipeline again — the third in three.** The
+`dry_run` rehearsal added for 0.1.1 could only rehearse a version that was
+*already published*. It packaged each crate separately, so packaging
+`v11-builder` resolved `v11-core = "^0.1.2"` against crates.io and failed
+because that is precisely the version not there yet. Both of its green runs had
+been at 0.1.1, after 0.1.1 was live, so the case it exists for had never once
+been exercised. Fixed by packaging all three in one `cargo package`, which
+stages them into a temporary local registry — that also makes `v11-builder` and
+`v11-cli` fully *verify* (build from their own archive) rather than merely
+package, removing an asymmetry the job had documented as unavoidable.
+
 ### What 0.1.1 changed
 
 Published 2026-07-25. Two things, both consequences of 0.1.0 having been cut
@@ -300,8 +311,9 @@ exists.
    that updates `v11/python/Cargo.lock`, since a workspace build never touches
    it.
 3. Rehearse it first. `dry_run` builds and packages every destination and
-   uploads nothing — three crates packaged, five wheels built, both HF pushes
-   staged — and tags nothing. No confirmation word, because it cannot publish:
+   uploads nothing — three crates packaged *and* built from their own
+   archives, five wheels built, both HF pushes staged — and tags nothing. No
+   confirmation word, because it cannot publish:
 
    ```sh
    gh workflow run publish.yml -f dry_run=true

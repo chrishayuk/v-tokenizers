@@ -100,48 +100,49 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
 
-      # Rehearsal. Deliberately two different strengths of check, because the
-      # stronger one is not available for every crate before a real publish:
+      # Rehearsal: ONE `cargo package` naming all three crates, with full
+      # verification (no --no-verify). Packaging them in a single invocation is
+      # what makes that possible. Cargo stages the crates being packaged into a
+      # temporary local registry (target/package/tmp-registry) and verifies each
+      # one against THAT, so v11-builder/v11-cli build against the v11-core
+      # .crate this run just produced instead of against the index.
       #
-      #   v11-core          full `cargo publish --dry-run` -- packages AND
-      #                     builds the packaged crate. It has no internal deps,
-      #                     so this always works.
-      #   builder/cli       `cargo package --no-verify` only. Their full
-      #                     verification builds the packaged crate against the
-      #                     REGISTRY copy of v11-core at the new version, which
-      #                     by definition is not on the index yet during a
-      #                     rehearsal -- `cargo publish --dry-run -p v11-cli`
-      #                     fails with "failed to select a version for the
-      #                     requirement v11-core = ^X" and that failure says
-      #                     nothing about the crate. Packaging still catches
-      #                     what this stage is for: bad metadata, missing
-      #                     include/exclude, a manifest that will not upload.
-      #                     That they compile is already proven by CI's
-      #                     `cargo build --workspace`.
-      - name: dry run -- package all three, fully verify what can be verified
+      # This job used to do it per-crate, which cannot work for an unreleased
+      # version: packaging v11-builder alone resolves `v11-core = "^<new>"`
+      # against crates.io, where the new version by definition does not exist
+      # yet, and fails with "failed to select a version for the requirement".
+      # `--no-verify` does not avoid it -- it skips the build, not the
+      # dependency resolution that writes the packaged Cargo.lock.
+      #
+      # The old shape passed twice on 2026-07-25 and still looked healthy,
+      # because both of those rehearsals ran at 0.1.1 while 0.1.1 was already
+      # live on the index -- so the resolution it could not survive never
+      # happened. It failed the first time it was asked to rehearse a version
+      # that was actually unreleased (0.1.2), which is the only case a
+      # rehearsal exists for. A dry run that can only rehearse already-shipped
+      # versions is not a dry run.
+      - name: dry run -- package and verify all three
         if: ${{ github.event.inputs.dry_run == 'true' }}
         run: |
           set -euo pipefail
           VERSION=$(grep -m1 '^version = ' Cargo.toml | sed -E 's/.*"(.*)".*/\1/')
           echo "would publish version ${VERSION}"
 
-          echo "::group::v11-core (full dry run: package + build)"
-          cargo publish -p v11-core --dry-run
-          # `cargo publish --dry-run` deletes its own archive on the way out,
-          # so re-package to leave an inspectable .crate like the other two.
-          cargo package -p v11-core --no-verify
-          echo "::endgroup::"
+          cargo package -p v11-core -p v11-builder -p v11-cli
 
-          for name in v11-builder v11-cli; do
-            echo "::group::${name} (package only -- see the comment in publish.yml)"
-            cargo package -p "$name" --no-verify
-            echo "::endgroup::"
-          done
-
-          echo "packaged, nothing uploaded:"
+          echo "packaged and verified, nothing uploaded:"
           ls -la target/package/*.crate
           test "$(ls target/package/*.crate | wc -l)" -eq 3 \
             || { echo "::error::expected 3 .crate files"; exit 1; }
+
+          # Assert the archives carry the version this run claims. Packaging
+          # cannot currently produce a differently-named .crate, but the point
+          # of the rehearsal is that its verdict is checked rather than
+          # inferred -- the 0.1.1 release went green having published nothing.
+          for name in v11-core v11-builder v11-cli; do
+            test -f "target/package/${name}-${VERSION}.crate" \
+              || { echo "::error::no ${name}-${VERSION}.crate"; exit 1; }
+          done
 
       - name: publish v11-core, v11-builder, v11-cli (in order, idempotent)
         if: ${{ github.event.inputs.dry_run != 'true' }}

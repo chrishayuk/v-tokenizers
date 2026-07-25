@@ -149,6 +149,7 @@ run's own verdict.**
 |---|---|---|
 | 0.1.0 | Sparse-index path used the web-API shape, so a genuinely successful publish looked like a failure | Correct path derivation, documented in the job |
 | 0.1.1 | Skip guard asked whether the crate existed on the index at all — true forever after the first version — so it published nothing and passed | Per-version check, plus an assertion that all three versions are actually on the index |
+| 0.1.2 | The rehearsal could only rehearse versions that were *already published*. Packaging `v11-builder`/`v11-cli` one crate at a time resolves `v11-core = "^<new>"` against crates.io, which by definition lacks the new version | One `cargo package` naming all three, which stages them into a temporary local registry and verifies against that |
 
 Every publishing surface now proves its own outcome: crates asserts each
 version is really on the sparse index, the tokenizer push replays golden
@@ -164,14 +165,22 @@ scripts' own `--dry-run`. Nothing is tagged. It needs no confirmation word,
 since it cannot publish. This is the check that would have caught 0.1.0's
 PyO3-vs-Python-3.14 mismatch without spending a version number.
 
-One asymmetry worth knowing, because the output says so too: `v11-core` gets a
-full `cargo publish --dry-run` (packaged *and* built), while `v11-builder` and
-`v11-cli` are only packaged. Their full verification builds the packaged crate
-against the **registry** copy of `v11-core` at the new version, which by
-definition is not on the index during a rehearsal — attempting it fails with
-`failed to select a version for the requirement v11-core = ^X`, which says
-nothing about the crate. That they compile is already proven by CI's
-`cargo build --workspace`.
+All three crates are packaged **and** built from the packaged archive, in one
+`cargo package` invocation naming all three. That single detail is what makes
+it possible: cargo stages the crates being packaged into a temporary local
+registry and verifies each against it, so `v11-builder`/`v11-cli` build against
+the `v11-core` archive the same run just produced.
+
+Until 0.1.2 this was per-crate, and documented an asymmetry — `v11-core` fully
+verified, the other two packaged only — on the grounds that their verification
+would need a registry copy of `v11-core` at the new version. The reasoning was
+right about the constraint and wrong about the conclusion: batching removes it
+entirely. Worse, the per-crate shape did not merely check less, it *could not
+run at all* against an unreleased version, so a rehearsal only ever passed for
+a version that was already live. Two green rehearsals at 0.1.1 hid this,
+because 0.1.1 was on the index by the time they ran. It failed the moment it
+was pointed at 0.1.2. Same lesson as the two rows above, arriving a third way:
+the rehearsal had never been exercised on the case it exists for.
 
 `publish_dataset.py --verify-only` additionally audits a live dataset repo
 against the working tree at any time, no token required.
