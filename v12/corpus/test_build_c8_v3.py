@@ -37,6 +37,25 @@ class C8V3Tests(unittest.TestCase):
                     for index in range(20):
                         handle.write(json.dumps({"domain": domain, "source": f"{domain}:{index}", "text": f"{domain}-{index}-abcdefghij"}) + "\n")
             digest = c8.sha256_file(source)
+            excluded_text = "code-0-abcdefghij"
+            c3_manifest = root / "c3.json"
+            c3_manifest.write_text(
+                json.dumps(
+                    {
+                        "slice_id": "fixture-c3",
+                        "items_total": 1,
+                        "heldout_jsonl_sha256": "fixture",
+                        "items": [
+                            {
+                                "domain": "code",
+                                "text_sha256": c8.sha256_bytes(
+                                    excluded_text.encode()
+                                ),
+                            }
+                        ],
+                    }
+                )
+            )
             shares = [0.45, 0.2, 0.15, 0.15, 0.05]
             spec = {
                 "schema_version": 1,
@@ -44,6 +63,10 @@ class C8V3Tests(unittest.TestCase):
                 "status": "frozen",
                 "seed": 7,
                 "total_bytes": 200,
+                "c3_exclusion": {
+                    "path": "c3.json",
+                    "sha256": c8.sha256_file(c3_manifest),
+                },
                 "domains": {
                     domain: {
                         "share": share,
@@ -53,6 +76,7 @@ class C8V3Tests(unittest.TestCase):
                 },
             }
             spec_path = root / "spec.json"
+            spec["status"] = "draft"
             spec_path.write_text(json.dumps(spec))
             output_a, output_b = root / "a.jsonl", root / "b.jsonl"
             manifest_a, manifest_b = root / "a.json", root / "b.json"
@@ -62,7 +86,40 @@ class C8V3Tests(unittest.TestCase):
             self.assertEqual(first["total_bytes_actual"], 200)
             self.assertEqual(output_a.read_bytes(), output_b.read_bytes())
             self.assertEqual(first["output_sha256"], second["output_sha256"])
+            self.assertEqual(first["c3_overlap_text_hashes"], 0)
+            self.assertEqual(first["domains"]["code"]["c3_rows_excluded"], 1)
+            self.assertNotIn(excluded_text, output_a.read_text())
             self.assertTrue(all(d["bytes_actual"] == d["bytes_target"] for d in first["domains"].values()))
+
+    def test_frozen_build_requires_expected_output_pin(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "source.jsonl"
+            source.write_text(
+                json.dumps({"source": "fixture", "text": "abcdefghij"}) + "\n"
+            )
+            spec = {
+                "schema_version": 1,
+                "corpus_id": "fixture",
+                "status": "frozen",
+                "seed": 7,
+                "total_bytes": 5,
+                "domains": {
+                    "only": {
+                        "share": 1.0,
+                        "sources": [
+                            {
+                                "path": "source.jsonl",
+                                "sha256": c8.sha256_file(source),
+                            }
+                        ],
+                    }
+                },
+            }
+            spec_path = root / "spec.json"
+            spec_path.write_text(json.dumps(spec))
+            with self.assertRaisesRegex(ValueError, "must pin expected_output"):
+                c8.build(spec_path, root / "out.jsonl", root / "manifest.json")
 
     def test_thin_domain_fails_instead_of_repeating_rows(self):
         row = c8.SourceRow(text="abc", source="fixture", text_sha256=c8.sha256_bytes(b"abc"))

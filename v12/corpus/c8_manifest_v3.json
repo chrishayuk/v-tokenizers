@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "corpus_id": "c8-v3",
+  "spec_status": "frozen",
+  "spec_path": "/Users/christopherhay/chris-source/v-tokenizers/v12/corpus/c8_v3_spec.json",
+  "spec_sha256": "9159ab0ed5f5ba9cc7bd09fb3aa3ce929c3ec208e9520271a66ab200afb92ece",
+  "seed": 20260725,
+  "total_bytes_target": 80000000,
+  "total_bytes_actual": 80000000,
+  "domain_shares_constant_across_scales": true,
+  "selection": "sha256(seed, domain, text_sha256), without replacement",
+  "deduplication": "exact UTF-8 text SHA-256 within and across domains",
+  "normalization": "identity; source Unicode and line endings are preserved",
+  "c3_exclusion": {
+    "path": "c3_v12_manifest.json",
+    "sha256": "8d09fac1ee7619628dd643e3dc59f3195a82f23cdc70215d6745f9d16e72925f",
+    "slice_id": "c3-v12",
+    "items_total": 200,
+    "unique_text_hashes": 200,
+    "heldout_jsonl_sha256": "52ab2ebb20b80585d56fe6f2ba292750b95c04eeef1af12673d6ad651710d08f"
+  },
+  "c3_overlap_text_hashes": 0,
+  "domains": {
+    "natural_prose": {
+      "share_target": 0.45,
+      "bytes_target": 36000000,
+      "bytes_actual": 36000000,
+      "rows_selected": 40101,
+      "eligible_rows_after_domain_dedup": 60027,
+      "c3_rows_excluded": 40,
+      "cross_domain_duplicates_removed": 0,
+      "sources": [
+        {
+          "path": "/Users/christopherhay/chris-source/v-tokenizers/v12/corpus/c8_v3_sources/natural_prose.jsonl",
+          "sha256": "1221f54706d67a5a3f130f41fec4a31a60a781b403a3240d2da865d1b8ee1b51",
+          "rows_eligible": 60067,
+          "bytes_eligible_before_dedup": 54000364,
+          "where": null,
+          "text_field": "text"
+        }
+      ]
+    },
+    "code": {
+      "share_target": 0.2,
+      "bytes_target": 16000000,
+      "bytes_actual": 16000000,
+      "rows_selected": 2269,
+      "eligible_rows_after_domain_dedup": 2284,
+      "c3_rows_excluded": 40,
+      "cross_domain_duplicates_removed": 0,
+      "sources": [
+        {
+          "path": "/Users/christopherhay/chris-source/v-tokenizers/v12/corpus/code_pool_selected.jsonl",
+          "sha256": "c597e1f26b64ca92922f0a6957aae8f97b44f75d97e6fa7e2d382894ce3e9587",
+          "rows_eligible": 2337,
+          "bytes_eligible_before_dedup": 16159545,
+          "where": null,
+          "text_field": "text"
+        }
+      ]
+    },
+    "math_reasoning": {
+      "share_target": 0.15,
+      "bytes_target": 12000000,
+      "bytes_actual": 12000000,
+      "rows_selected": 163252,
+      "eligible_rows_after_domain_dedup": 321628,
+      "c3_rows_excluded": 40,
+      "cross_domain_duplicates_removed": 247,
+      "sources": [
+        {
+          "path": "/Users/christopherhay/chris-source/v-tokenizers/v12/corpus/c8_v3_sources/math_reasoning.jsonl",
+          "sha256": "ddefc41e79ecafa206f1e9d33d65e12834747b606795dfa5e3c6321e33e29972",
+          "rows_eligible": 321915,
+          "bytes_eligible_before_dedup": 24000125,
+          "where": null,
+          "text_field": "text"
+        }
+      ]
+    },
+    "json_tool_cell": {
+      "share_target": 0.15,
+      "bytes_target": 12000000,
+      "bytes_actual": 12000000,
+      "rows_selected": 59860,
+      "eligible_rows_after_domain_dedup": 119437,
+      "c3_rows_excluded": 40,
+      "cross_domain_duplicates_removed": 0,
+      "sources": [
+        {
+          "path": "/Users/christopherhay/chris-source/v-tokenizers/v12/corpus/c8_v3_sources/json_tool_cell.jsonl",
+          "sha256": "a3dec04557a7550428b12359654d9ae460e2f65802e7111e8f9a0d752950fd26",
+          "rows_eligible": 119477,
+          "bytes_eligible_before_dedup": 24000051,
+          "where": null,
+          "text_field": "text"
+        }
+      ]
+    },
+    "noisy_unicode_mixed": {
+      "share_target": 0.05,
+      "bytes_target": 4000000,
+      "bytes_actual": 4000000,
+      "rows_selected": 1046,
+      "eligible_rows_after_domain_dedup": 2068,
+      "c3_rows_excluded": 40,
+      "cross_domain_duplicates_removed": 0,
+      "sources": [
+        {
+          "path": "/Users/christopherhay/chris-source/v-tokenizers/v12/corpus/c8_v3_sources/noisy_unicode_mixed.jsonl",
+          "sha256": "6e4919cabf020b73150d325210e68b28c88e01d6ddb4cda46bd1241831edf071",
+          "rows_eligible": 2108,
+          "bytes_eligible_before_dedup": 8000345,
+          "where": null,
+          "text_field": "text"
+        }
+      ]
+    }
+  },
+  "output_jsonl": "/Users/christopherhay/chris-source/v-tokenizers/v12/corpus/c8_corpus_v3.jsonl",
+  "output_sha256": "9eee14cd0b1b5b4f2d476d4fbde55c50a40b9aec09d204fd63cf1a036282e466",
+  "rows": 266528
+}

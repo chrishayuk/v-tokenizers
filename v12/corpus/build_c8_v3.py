@@ -136,6 +136,44 @@ def load_source_rows(
     return rows, provenance
 
 
+def load_excluded_hashes(
+    spec_path: Path,
+    exclusion_spec: dict[str, Any] | None,
+    require_pins: bool,
+) -> tuple[set[str], dict[str, Any] | None]:
+    if not exclusion_spec:
+        return set(), None
+    path = _resolve(spec_path, exclusion_spec["path"])
+    actual_sha256 = sha256_file(path)
+    expected_sha256 = exclusion_spec.get("sha256")
+    if require_pins and not expected_sha256:
+        raise ValueError(f"frozen build requires a C3 manifest sha256 for {path}")
+    if expected_sha256 and expected_sha256 != actual_sha256:
+        raise ValueError(
+            f"C3 manifest digest mismatch for {path}: "
+            f"expected {expected_sha256}, got {actual_sha256}"
+        )
+    manifest = json.loads(path.read_text())
+    hashes = {
+        item["text_sha256"]
+        for item in manifest.get("items", [])
+        if isinstance(item.get("text_sha256"), str)
+    }
+    if require_pins and len(hashes) != manifest.get("items_total"):
+        raise ValueError(
+            f"C3 manifest item/hash count mismatch: "
+            f"{len(hashes)} unique hashes for {manifest.get('items_total')} items"
+        )
+    return hashes, {
+        "path": exclusion_spec["path"],
+        "sha256": actual_sha256,
+        "slice_id": manifest.get("slice_id"),
+        "items_total": manifest.get("items_total"),
+        "unique_text_hashes": len(hashes),
+        "heldout_jsonl_sha256": manifest.get("heldout_jsonl_sha256"),
+    }
+
+
 def deterministic_rows(rows: Iterable[SourceRow], seed: int, domain: str) -> list[SourceRow]:
     unique: dict[str, SourceRow] = {}
     for row in rows:
@@ -212,6 +250,9 @@ def build(spec_path: Path, output_path: Path, manifest_path: Path, total_bytes: 
     targets = allocate_byte_targets(build_total, shares)
     require_pins = spec.get("status") == "frozen"
     seed = int(spec["seed"])
+    excluded_hashes, exclusion_provenance = load_excluded_hashes(
+        spec_path, spec.get("c3_exclusion"), require_pins
+    )
 
     selected_by_domain: dict[str, list[SourceRow]] = {}
     domain_manifest: dict[str, Any] = {}
@@ -226,6 +267,8 @@ def build(spec_path: Path, output_path: Path, manifest_path: Path, total_bytes: 
             provenances.append(provenance)
 
         ordered = deterministic_rows(loaded, seed, domain)
+        c3_duplicates = sum(row.text_sha256 in excluded_hashes for row in ordered)
+        ordered = [row for row in ordered if row.text_sha256 not in excluded_hashes]
         cross_domain_duplicates = sum(row.text_sha256 in global_hashes for row in ordered)
         ordered = [row for row in ordered if row.text_sha256 not in global_hashes]
         selected = select_to_byte_budget(ordered, targets[domain])
@@ -238,6 +281,7 @@ def build(spec_path: Path, output_path: Path, manifest_path: Path, total_bytes: 
             "bytes_actual": actual_bytes,
             "rows_selected": len(selected),
             "eligible_rows_after_domain_dedup": len(ordered),
+            "c3_rows_excluded": c3_duplicates,
             "cross_domain_duplicates_removed": cross_domain_duplicates,
             "sources": provenances,
         }
@@ -261,6 +305,30 @@ def build(spec_path: Path, output_path: Path, manifest_path: Path, total_bytes: 
             )
 
     output_sha256 = sha256_file(output_path)
+    expected_output = spec.get("expected_output")
+    if require_pins:
+        if not expected_output:
+            raise ValueError("frozen C8 spec must pin expected_output")
+        expected_sha256 = expected_output.get("sha256")
+        if output_sha256 != expected_sha256:
+            raise ValueError(
+                f"C8 output digest mismatch: expected {expected_sha256}, "
+                f"got {output_sha256}"
+            )
+        expected_rows = expected_output.get("rows")
+        if expected_rows is not None and len(interleaved) != int(expected_rows):
+            raise ValueError(
+                f"C8 output row-count mismatch: expected {expected_rows}, "
+                f"got {len(interleaved)}"
+            )
+    selected_hashes = {
+        sha256_bytes(row.text.encode("utf-8"))
+        for rows in selected_by_domain.values()
+        for row in rows
+    }
+    c3_overlap = selected_hashes & excluded_hashes
+    if c3_overlap:
+        raise ValueError(f"final C8 output overlaps C3 by {len(c3_overlap)} text hashes")
     actual_total = sum(item["bytes_actual"] for item in domain_manifest.values())
     manifest = {
         "schema_version": SCHEMA_VERSION,
@@ -274,6 +342,9 @@ def build(spec_path: Path, output_path: Path, manifest_path: Path, total_bytes: 
         "domain_shares_constant_across_scales": True,
         "selection": "sha256(seed, domain, text_sha256), without replacement",
         "deduplication": "exact UTF-8 text SHA-256 within and across domains",
+        "normalization": "identity; source Unicode and line endings are preserved",
+        "c3_exclusion": exclusion_provenance,
+        "c3_overlap_text_hashes": len(c3_overlap),
         "domains": domain_manifest,
         "output_jsonl": str(output_path),
         "output_sha256": output_sha256,

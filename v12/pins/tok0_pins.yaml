@@ -52,7 +52,13 @@ commitments:
   C7_dormant_blocks_immutable: "string/id/normalization/merge-precedence/activation-stage/encoding-eligibility frozen before TOK-0, no later additions"
   C8_tokenizer_training_corpus:
     description: "superset (TinyStories + code + math + structured), frozen: datasets+revisions, per-domain byte counts, mixture proportions, sampling seed, normalization, dedup, C3-slice exclusion, repeated-identifier cap"
-    status: "3 of 4 domains have real source material (found 2026-07-19); no unified manifest existed until v12/c8_manifest.json (this session). Mixture proportions there are PROVISIONAL v0 -- reasonable defaults to unblock experimentation, not a frozen research decision."
+    status: "FROZEN 2026-07-25 as C8 v3 before TOK-2 model results: 80,000,000 exact text bytes at fixed 45/20/15/15/5 domain shares; two byte-identical builds; fresh 200-item C3 excluded with zero overlap."
+    frozen_spec: "v12/corpus/c8_v3_spec.json"
+    frozen_manifest: "v12/corpus/c8_manifest_v3.json"
+    source_spec: "v12/corpus/c8_v3_source_spec.json"
+    c3_spec: "v12/corpus/c3_v12_spec.json"
+    c3_manifest: "v12/corpus/c3_v12_manifest.json"
+    output_sha256: "9eee14cd0b1b5b4f2d476d4fbde55c50a40b9aec09d204fd63cf1a036282e466"
     domain_prose:
       source: "roneneldan/TinyStories (same pinned hub_sha as C2 eval stream: f54c09fd23315a6f9c86f9dc80f725de7d8f9c64)"
       status: "trivially available — streamed, no local storage needed"

@@ -2,9 +2,9 @@
 
 Status: frozen 2026-07-25, before TOK-2 model results.
 
-This freezes only the 20% code source allocation. C8 v3 as a whole remains
-draft until prose, maths/reasoning, JSON/tool/cell, noisy Unicode, and C3
-exclusion evidence are also pinned.
+This freezes the 20% code source allocation. C8 v3 as a whole was subsequently
+frozen in `C8_V3_FREEZE.md`, including prose, maths/reasoning,
+JSON/tool/cell, noisy Unicode, and fresh C3 exclusion evidence.
 
 ## Source strata
 

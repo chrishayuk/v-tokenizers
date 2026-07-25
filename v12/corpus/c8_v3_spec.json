@@ -1,13 +1,30 @@
 {
   "schema_version": 1,
   "corpus_id": "c8-v3",
-  "status": "draft-awaiting-source-pins",
+  "status": "frozen",
   "seed": 20260725,
   "total_bytes": 80000000,
+  "expected_output": {
+    "sha256": "9eee14cd0b1b5b4f2d476d4fbde55c50a40b9aec09d204fd63cf1a036282e466",
+    "rows": 266528
+  },
+  "normalization": "identity; preserve exact Unicode and line endings",
+  "c3_exclusion": {
+    "path": "c3_v12_manifest.json",
+    "sha256": "8d09fac1ee7619628dd643e3dc59f3195a82f23cdc70215d6745f9d16e72925f"
+  },
   "domains": {
     "natural_prose": {
       "share": 0.45,
-      "sources": []
+      "sources": [
+        {
+          "path": "c8_v3_sources/natural_prose.jsonl",
+          "sha256": "1221f54706d67a5a3f130f41fec4a31a60a781b403a3240d2da865d1b8ee1b51",
+          "text_field": "text",
+          "source_field": "source",
+          "source_spec": "c8_v3_source_spec.json"
+        }
+      ]
     },
     "code": {
       "share": 0.2,
@@ -23,28 +40,56 @@
     },
     "math_reasoning": {
       "share": 0.15,
-      "sources": []
+      "sources": [
+        {
+          "path": "c8_v3_sources/math_reasoning.jsonl",
+          "sha256": "ddefc41e79ecafa206f1e9d33d65e12834747b606795dfa5e3c6321e33e29972",
+          "text_field": "text",
+          "source_field": "source",
+          "source_spec": "c8_v3_source_spec.json"
+        }
+      ]
     },
     "json_tool_cell": {
       "share": 0.15,
-      "sources": []
+      "sources": [
+        {
+          "path": "c8_v3_sources/json_tool_cell.jsonl",
+          "sha256": "a3dec04557a7550428b12359654d9ae460e2f65802e7111e8f9a0d752950fd26",
+          "text_field": "text",
+          "source_field": "source",
+          "source_spec": "c8_v3_source_spec.json"
+        }
+      ]
     },
     "noisy_unicode_mixed": {
       "share": 0.05,
-      "sources": []
+      "sources": [
+        {
+          "path": "c8_v3_sources/noisy_unicode_mixed.jsonl",
+          "sha256": "6e4919cabf020b73150d325210e68b28c88e01d6ddb4cda46bd1241831edf071",
+          "text_field": "text",
+          "source_field": "source",
+          "source_spec": "c8_v3_source_spec.json"
+        }
+      ]
     }
   },
   "completed_freeze_items": [
     "The code domain is frozen at seven revision-pinned repositories with licence evidence, deterministic whole-file selection, and file/repository/language/identifier/near-duplicate caps.",
-    "The selected code source contains 16,159,545 text bytes across 2,340 rows; C8 ignores three empty files and exact deduplication leaves 16,151,568 unique text bytes across 2,324 eligible rows."
+    "The selected code source contains 16,159,545 text bytes across 2,340 rows; C8 ignores three empty files and exact deduplication leaves 16,151,568 unique text bytes across 2,324 eligible rows.",
+    "Natural prose is pinned to TinyStories revision f54c09f and an exact Arrow shard digest.",
+    "Maths/reasoning and JSON/tool/cell pools are distinct identity-text and canonical-JSON views of four SHA-pinned Cell80 corpora.",
+    "Noisy/Unicode/mixed text is an identity-only selection of naturally occurring non-ASCII multiline records from a pinned FineWeb sample shard.",
+    "Fresh C3 v12 contains 40 hash-selected items per domain and is excluded by exact UTF-8 text SHA-256."
   ],
   "freeze_checklist": [
-    "Add at least one revision-pinned, SHA-256-pinned JSONL source per domain.",
-    "Keep source rows disjoint from the frozen C3 evaluation slice.",
-    "Confirm each domain has enough unique bytes at the largest planned scale.",
+    "COMPLETE: Add at least one revision-pinned, SHA-256-pinned JSONL source per domain.",
+    "COMPLETE: Keep source rows disjoint from the frozen C3 evaluation slice.",
+    "COMPLETE: Confirm each domain has enough unique bytes at the largest planned scale.",
     "COMPLETE: Freeze the repository-stratified code pool and its file/repository/language/identifier/duplicate caps.",
-    "Define and pin normalization; the recommended default is identity.",
-    "Define a repeated-identifier cap before changing status to frozen.",
-    "Build twice and verify identical output_sha256."
+    "COMPLETE: Define and pin identity normalization.",
+    "COMPLETE: Define the code repeated-identifier cap before freezing.",
+    "COMPLETE: Build twice and verify byte-identical output with SHA-256 9eee14cd0b1b5b4f2d476d4fbde55c50a40b9aec09d204fd63cf1a036282e466."
   ]
 }
