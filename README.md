@@ -176,13 +176,13 @@ v-tokenizers/
 
 ## Releases
 
-| Destination | Name | Published | Prepared |
-|---|---|---|---|
-| crates.io | `v11-core`, `v11-builder`, `v11-cli` | 0.1.0 | 0.1.1 |
-| PyPI | **`v11-tokenizer`** (import `v11`) | 0.1.0 | 0.1.1 |
-| HF Hub (model) | `chrishayuk/v11-tokenizer` | at `ee502e0` | — |
-| HF Hub (dataset) | `chrishayuk/v11-corpus` | at `ee502e0` | — |
-| HF Hub (dataset) | `chrishayuk/v11-wordnet-lemmas` | not published | — |
+| Destination | Name | Current |
+|---|---|---|
+| crates.io | `v11-core`, `v11-builder`, `v11-cli` | 0.1.1 |
+| PyPI | **`v11-tokenizer`** (import `v11`) | 0.1.1 — 5 abi3 wheels + sdist |
+| HF Hub (model) | `chrishayuk/v11-tokenizer` | built at `ee502e0` |
+| HF Hub (dataset) | `chrishayuk/v11-corpus` | built at `ee502e0` |
+| HF Hub (dataset) | `chrishayuk/v11-wordnet-lemmas` | not published |
 
 **The Hub artifact does not carry the crate version, and that is deliberate.**
 Its identity is `sha256(tokenizer.json)` (`10dd5110…`), because a version
@@ -195,27 +195,50 @@ byte-safety fix. Do not expect them to move together.
 WordNet, and redistributing a derivative is a licence decision for a human,
 not a workflow default. The `publish_wordnet` toggle is off by default.
 
-### What 0.1.1 changes
+### What 0.1.1 changed
 
-Prepared but **not yet published** -- publishing is a manual, confirm-gated
-dispatch (see *Cutting a release*). Two things, both consequences of 0.1.0
-having been cut before they were noticed:
+Published 2026-07-25. Two things, both consequences of 0.1.0 having been cut
+before they were noticed:
 
-- **`v11 vocab` reaches the published CLI.** The subcommand landed in `ee502e0`
+- **`v11 vocab` reached the published CLI.** The subcommand landed in `ee502e0`
   about three hours after `v11-cli` 0.1.0 went to crates.io, so
-  `cargo install v11-cli` currently gets a binary without it.
+  `cargo install v11-cli` got a binary without it.
 - **Wheels for platforms other than one.** 0.1.0 put a single
   `cp312-macosx_11_0_arm64` wheel on PyPI, so `pip install v11-tokenizer`
   on Linux, Windows, an Intel Mac, or any non-3.12 Python fell through to the
   sdist and needed a Rust toolchain to build it. `v11-python` now builds
   against PyO3's stable ABI (`abi3-py39`) across five target triples, so one
-  wheel per platform covers every Python >= 3.9. Verified locally: the
-  `cp39-abi3` wheel built under 3.12 installs and round-trips under 3.14.
+  wheel per platform covers every Python >= 3.9. The `cp39-abi3` wheel built
+  under 3.12 installs and round-trips under 3.14.
+
+**The release itself found a third bug, in the pipeline.** The first 0.1.1
+dispatch published all five wheels to PyPI, published *nothing* to crates.io,
+and reported success. `publish-crates` asked whether each crate had a
+sparse-index file at all -- true forever once the first version ships -- so
+every release after the first would have skipped all three crates and gone
+green having uploaded nothing. It surfaced only because the registries were
+checked afterwards rather than the run's own verdict being trusted.
+
+The check is now per-version, and the job asserts all three versions are
+actually on the index before it can pass. Two details worth keeping:
+
+- **No `curl | grep -q`.** Under `set -o pipefail` grep exits at the first
+  match, curl dies of SIGPIPE, and the pipeline reports failure on the
+  *success* path -- which would republish a version that is already live.
+  The body is captured and matched instead.
+- **The assertion is the actual fix.** The bug was invisible because every
+  individual step succeeded; a release that publishes nothing has to fail
+  loudly rather than be inferred from control flow.
 
 ### Tags
 
 Every release commit carries an annotated `vX.Y.Z` tag, created by the
 `tag-release` job in `publish.yml` once no publish job has failed.
+
+| tag | commit | |
+|---|---|---|
+| `v0.1.0` | `8f9c942` | retroactive, approximate — see below |
+| `v0.1.1` | `6745f40` | created by `tag-release` |
 
 0.1.0 predates that job and is tagged retroactively at `8f9c942`. That tag is
 approximate by necessity and says so in its own message: `v11-core` and the

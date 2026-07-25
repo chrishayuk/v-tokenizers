@@ -2,7 +2,10 @@
 
 **Knowledge-First Tokenizer**
 
-Version 0.1.0
+Spec revision 0.1.0. This versions the *design document*, not the packages —
+the crates and wheel move independently (see
+[Releases](../README.md#releases)), and the vocabulary this describes is
+unchanged since the 2026-07-24 byte-safety fix.
 
 ---
 

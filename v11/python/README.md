@@ -4,7 +4,17 @@ Pure-Rust knowledge-first tokenizer, exposed as a Python module via PyO3.
 
 ## Install
 
-From source:
+```bash
+pip install v11-tokenizer
+```
+
+The distribution is `v11-tokenizer`; the import is `v11`. Wheels are built
+against PyO3's stable ABI, so one wheel per platform covers every Python >= 3.9
+— Linux (x86_64/aarch64), macOS (Intel/Apple silicon) and Windows x64. No Rust
+toolchain needed. (Use 0.1.1 or newer: 0.1.0 shipped only a macOS arm64 / cp312
+wheel, so everywhere else pip fell back to building the sdist.)
+
+For development, from source:
 
 ```bash
 cd v-tokenizers/v11/python
@@ -58,8 +68,12 @@ Aho-Corasick pass with no C++ FFI hops.
 ```bash
 maturin build --release
 ls target/wheels/
-# v11_tokenizer-0.1.0-cp312-abi3-macosx_11_0_arm64.whl
+# v11_tokenizer-0.1.1-cp39-abi3-macosx_11_0_arm64.whl
 ```
+
+The `cp39-abi3` tag is the stable-ABI build: that one file installs on any
+CPython >= 3.9, whatever interpreter built it. Releases produce one per
+platform via the matrix in `.github/workflows/publish.yml`.
 
 ## License
 
